@@ -111,9 +111,20 @@ mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint2_pos,
 
 simulationSettings = exu.SimulationSettings() #takes currently set values or default values
 
+torque = [0,0,2e9]
+force = [0,2e9,0]
+mbs.CreateForce(bodyNumber=b1,
+                loadVector=force,
+                localPosition=[-l1-0.1, 0, com2_global[2]+0.05], #at tip
+                bodyFixed=False) #if True, direction would corotate with body
+mbs.CreateTorque(bodyNumber=b1,
+                loadVector=torque,
+                localPosition=[0,0,0],   #at body's reference point/center
+                bodyFixed=False)
+
 mbs.Assemble()
 
-tEnd = 4 #simulation time
+tEnd = 10 #simulation time
 h = 1e-3 #step size
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
@@ -129,5 +140,13 @@ SC.visualizationSettings.nodes.drawNodesAsPoint = False
 SC.visualizationSettings.nodes.showBasis = True #shows three RGB (=xyz) lines for node basis
 
 exu.StartRenderer()
-SC.WaitForRenderEngineStopFlag()
-exu.StopRenderer()
+if 'renderState' in exu.sys: #reload old view
+    SC.SetRenderState(exu.sys['renderState'])
+
+mbs.WaitForUserToContinue() #stop before simulating
+mbs.SolveDynamic(simulationSettings = simulationSettings,
+                 solverType = exu.DynamicSolverType.TrapezoidalIndex2)
+mbs.SolveDynamic(simulationSettings = simulationSettings)
+SC.WaitForRenderEngineStopFlag() #stop before closing
+exu.StopRenderer() #safely close rendering window!
+mbs.SolutionViewer()
