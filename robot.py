@@ -32,21 +32,21 @@ com2_local = com2_global - joint1_pos
 com3_local = com3_global - joint2_pos
 
 inertiaTensor1 = np.array([
-    [25749603.700 * 1e3, 25062.125 * 1e3, 9651359.305 * 1e3],
-    [25062.125 * 1e3, 92340828.791 * 1e3, 24778.147 * 1e3],
-    [9651359.305 * 1e3, 24778.147 * 1e3, 83172050.999 * 1e3]
+    [25749603.700 / 1e9, 25062.125 / 1e9, 9651359.305 / 1e9],
+    [25062.125 / 1e9, 92340828.791 / 1e9, 24778.147 / 1e9],
+    [9651359.305 / 1e9, 24778.147 / 1e9, 83172050.999 / 1e9]
 ])
 
 inertiaTensor2 = np.array([
-    [13449632.937 * 1e3, -24026.329 * 1e3, 1660746.774 * 1e3],
-    [-24026.329 * 1e3, 84912103.395 * 1e3, 27847.617 * 1e3],
-    [1660746.774 * 1e3, 27847.617 * 1e3, 89804961.922 * 1e3]
+    [13449632.937 / 1e9, -24026.329 / 1e9, 1660746.774 / 1e9],
+    [-24026.329 / 1e9, 84912103.395 / 1e9, 27847.617 / 1e9],
+    [1660746.774 / 1e9, 27847.617 / 1e9, 89804961.922 / 1e9]
 ])
 
 inertiaTensor3 = np.array([
-    [480197.752 * 1e3, 835.157 * 1e3, 2908.542 * 1e3],
-    [835.157 * 1e3, 14103107.261 * 1e3, 0 * 1e3],
-    [2908.542 * 1e3, 0 * 1e3, 14577958.019 * 1e3]
+    [480197.752 / 1e9, 835.157 / 1e9, 2908.542 / 1e9],
+    [835.157 / 1e9, 14103107.261 / 1e9, 0 / 1e9],
+    [2908.542 / 1e9, 0 / 1e9, 14577958.019 / 1e9]
 ])
 
 oGround = mbs.CreateGround(referencePosition=[0,0,0])
@@ -111,8 +111,8 @@ mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint2_pos,
 
 simulationSettings = exu.SimulationSettings() #takes currently set values or default values
 
-torque = [0,0,2e9]
-force = [0,2e9,0]
+torque = [0,0,0]
+force = [0,0.1,0]
 mbs.CreateForce(bodyNumber=b1,
                 loadVector=force,
                 localPosition=[-l1-0.1, 0, com2_global[2]+0.05], #at tip
