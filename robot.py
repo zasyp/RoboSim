@@ -9,23 +9,27 @@ mbs = SC.AddSystem()
 
 g = [0, -9.81, 0]
 
-l1 = 0.205  # Звено 1
-l2 = 0.205  # Звено 2
-l3 = 0.39   # Звено 3
+l1 = 0.205
+l2 = 0.205
+l3 = 0.39
 
-m1 = 6.936  # кг, Звено 1
-m2 = 7.609  # кг, Звено 2
-m3 = 0.533  # кг, Звено 3
+m1 = 6.936
+m2 = 7.609
+m3 = 0.533
+m_cil = 9.838
 
 w = 0.1
 
-com1_global = np.array([0,0,0])  # Звено 1
-com2_global = np.array([-205/1000, 0, 81 / 1000])  # Звено 2
-com3_global = np.array([-410 / 1000, 0 / 1000, 155 / 1000])  # Звено 3
+com1_global = np.array([0,0,300])  # Звено 1
+com2_global = np.array([-205/1000, 0, 381 / 1000])  # Звено 2
+com3_global = np.array([-410 / 1000, 0 / 1000, 455 / 1000])  # Звено 3
 
-joint0_pos = np.array([0, 0, 0])          # Шарнир 0 (основание)
-joint1_pos = np.array([-l1, 0, com2_global[2]])         # Шарнир 1 (между звеном 1 и 2)
-joint2_pos = np.array([-(l1 + l2), 0, com3_global[2]])    # Шарнир 2 (между звеном 2 и 3)
+com_cil_global = np.array([0,0,0])
+
+joint0_pos = np.array([0, 0, 0])
+joint1_pos = np.array([0, 0, 300])          # Шарнир 0 (основание)
+joint2_pos = np.array([-l1, 0, com2_global[2]])         # Шарнир 1 (между звеном 1 и 2)
+joint3_pos = np.array([-(l1 + l2), 0, com3_global[2]])    # Шарнир 2 (между звеном 2 и 3)
 
 com1_local = com1_global - joint0_pos
 com2_local = com2_global - joint1_pos
@@ -49,6 +53,14 @@ inertiaTensor3 = np.array([
     [2908.542 / 1e9, 0 / 1e9, 14577958.019 / 1e9]
 ])
 
+inertiaTensorCilinder = np.array([
+    [160256927.799232 / 1e9, -3211.288581 / 1e9, -57566.712025 / 1e9],
+    [-3211.288581 / 1e9, 160272225.594173 / 1e9, -20361.408526 / 1e9],
+    [-57566.712025 / 1e9, -20361.408526 / 1e9, 19416649.539239 / 1e9]
+])
+
+
+
 oGround = mbs.CreateGround(referencePosition=[0,0,0])
 
 graphicsBody1 = graphics.FromSTLfile('solution/link1.stl',
@@ -61,9 +73,15 @@ graphicsBody3 = graphics.FromSTLfile('solution/link3.stl',
                                      color=graphics.color.dodgerblue,
                                      scale=0.001)
 
+graphicsBodyCilinder = graphics.FromSTLfile('solution/cilinder.stl',
+                                     color=graphics.color.dodgerblue,
+                                     scale=0.001)
+
+
 i1 = RigidBodyInertia(mass=m1, inertiaTensor=inertiaTensor1)
 i2 = RigidBodyInertia(mass=m2, inertiaTensor=inertiaTensor2)
 i3 = RigidBodyInertia(mass=m3, inertiaTensor=inertiaTensor3)
+iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
 
 [n1, b1] = AddRigidBody(
     mainSys=mbs,
@@ -97,16 +115,30 @@ i3 = RigidBodyInertia(mass=m3, inertiaTensor=inertiaTensor3)
     graphicsDataList=[graphicsBody3]
 )
 
+[n4, b4] = AddRigidBody(
+    mainSys=mbs,
+    inertia=iCilinder,
+    nodeType=str(exu.NodeType.RotationEulerParameters),
+    position=com_cil_global,
+    rotationMatrix=np.eye(3),
+    gravity=g,
+    graphicsDataList=[graphicsBodyCilinder]
+)
+
 markerGround = mbs.AddMarker(MarkerBodyRigid(bodyNumber=oGround, localPosition=[0,0,0]))
 markerBody0J0 = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b1, localPosition=joint0_pos))
 
-mbs.CreateRevoluteJoint(bodyNumbers=[oGround, b1], position=joint0_pos,
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, b4], position=joint0_pos,
+                         useGlobalFrame=True, axis=[0,0,1],
+                         axisRadius=0.2*w, axisLength=1*w)
+
+mbs.CreateRevoluteJoint(bodyNumbers=[b4, b1], position=joint1_pos,
                         axis=[0,0,1], axisRadius=0.2*w, axisLength=1*w)
 
-mbs.CreateRevoluteJoint(bodyNumbers=[b1, b2], position=joint1_pos,
+mbs.CreateRevoluteJoint(bodyNumbers=[b1, b2], position=joint2_pos,
                         axis=[0,0,1], axisRadius=0.2*w, axisLength=1*w)
 
-mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint2_pos,
+mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_pos,
                         axis=[0,0,1], axisRadius=0.2*w, axisLength=0.3*w)
 
 simulationSettings = exu.SimulationSettings() #takes currently set values or default values
@@ -121,6 +153,30 @@ mbs.CreateTorque(bodyNumber=b1,
                 loadVector=torque,
                 localPosition=[0,0,0],   #at body's reference point/center
                 bodyFixed=False)
+
+# sens0=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint0_pos],
+#                                fileName = 'solution/sensorPos0.txt',
+#                                outputVariableType = exu.OutputVariableType.Torque))
+#
+# sens01=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint0_pos],
+#                                fileName = 'solution/sensorPos01.txt',
+#                                outputVariableType = exu.OutputVariableType.Force))
+#
+# sens1=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint1_pos],
+#                                fileName = 'solution/sensorPos1.txt',
+#                                outputVariableType = exu.OutputVariableType.Torque))
+#
+# sens11=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint1_pos],
+#                                fileName = 'solution/sensorPos11.txt',
+#                                outputVariableType = exu.OutputVariableType.Force))
+#
+# sens2=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint2_pos],
+#                                fileName = 'solution/sensorPos2.txt',
+#                                outputVariableType = exu.OutputVariableType.Torque))
+#
+# sens21=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint2_pos],
+#                                fileName = 'solution/sensorPos21.txt',
+#                                outputVariableType = exu.OutputVariableType.Force))
 
 mbs.Assemble()
 
