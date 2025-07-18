@@ -145,10 +145,12 @@ simulationSettings = exu.SimulationSettings() #takes currently set values or def
 
 torque = [0,0,0]
 force = [0,0.05,0]
+vert_force = [0,0,0.05]
 mbs.CreateForce(bodyNumber=b4,
-                loadVector=force,
+                loadVector=vert_force,
                 localPosition=[0, 0, 0], #at tip
                 bodyFixed=False) #if True, direction would corotate with body
+
 mbs.CreateForce(bodyNumber=b1,
                 loadVector=force,
                 localPosition=[-l1-0.1, 0, com2_global[2]+0.05], #at tip
