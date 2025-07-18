@@ -20,11 +20,11 @@ m_cil = 9.838
 
 w = 0.1
 
-com1_global = np.array([0,0,300])  # Звено 1
-com2_global = np.array([-205/1000, 0, 381 / 1000])  # Звено 2
-com3_global = np.array([-410 / 1000, 0 / 1000, 455 / 1000])  # Звено 3
+com_cil_global = np.array([0,0,-300/1000])
+com1_global = np.array([0,0,0])  # Звено 1
+com2_global = np.array([-205/1000, 0, 81 / 1000])  # Звено 2
+com3_global = np.array([-410 / 1000, 0 / 1000, 155 / 1000])  # Звено 3
 
-com_cil_global = np.array([0,0,0])
 
 joint0_pos = np.array([0, 0, 0])
 joint1_pos = np.array([0, 0, 300])          # Шарнир 0 (основание)
@@ -144,7 +144,11 @@ mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_pos,
 simulationSettings = exu.SimulationSettings() #takes currently set values or default values
 
 torque = [0,0,0]
-force = [0,0.1,0]
+force = [0,0.05,0]
+mbs.CreateForce(bodyNumber=b4,
+                loadVector=force,
+                localPosition=[0, 0, 0], #at tip
+                bodyFixed=False) #if True, direction would corotate with body
 mbs.CreateForce(bodyNumber=b1,
                 loadVector=force,
                 localPosition=[-l1-0.1, 0, com2_global[2]+0.05], #at tip
