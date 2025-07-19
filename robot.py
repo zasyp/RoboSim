@@ -146,9 +146,12 @@ mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_pos,
 
 simulationSettings = exu.SimulationSettings() #takes currently set values or default values
 
-torque = [0,0,0]
+torque = [0,0,0.1]
+torque2 = [0,0,-0.05]
+
 force = [0,0.05,0]
 vert_force = [0,0,0.1]
+
 mbs.CreateForce(bodyNumber=b4,
                 loadVector=vert_force,
                 localPosition=[0, 0, 0], #at tip
