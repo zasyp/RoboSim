@@ -174,6 +174,19 @@ mbs.CreateTorque(bodyNumber=b2,
                 localPosition=[0,0,0],   #at body's reference point/center
                 bodyFixed=False)
 
+joint1_sens=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = joint1_pos,
+                               fileName = 'solution/sensorPos.txt',
+                               outputVariableType = exu.OutputVariableType.Torque))
+
+joint2_sens=mbs.AddSensor(SensorBody(bodyNumber = b2, localPosition = joint2_pos,
+                               fileName = 'solution/sensorPos.txt',
+                               outputVariableType = exu.OutputVariableType.Torque))
+
+joint3_sens=mbs.AddSensor(SensorBody(bodyNumber = b3, localPosition = joint3_pos,
+                               fileName = 'solution/sensorPos.txt',
+                               outputVariableType = exu.OutputVariableType.Torque))
+
+
 mbs.Assemble()
 
 tEnd = 10 #simulation time
