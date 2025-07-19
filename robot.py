@@ -154,12 +154,20 @@ mbs.CreateForce(bodyNumber=b4,
                 localPosition=[0, 0, 0], #at tip
                 bodyFixed=False) #if True, direction would corotate with body
 
-mbs.CreateForce(bodyNumber=b1,
-                loadVector=force,
-                localPosition=[-l1-0.1, 0, com2_global[2]+0.05], #at tip
+mbs.CreateForce(bodyNumber=b4,
+                loadVector=vert_force,
+                localPosition=[0, 0, 0], #at tip
                 bodyFixed=False) #if True, direction would corotate with body
 mbs.CreateTorque(bodyNumber=b1,
                 loadVector=torque,
+                localPosition=[0,0,0],   #at body's reference point/center
+                bodyFixed=False)
+mbs.CreateTorque(bodyNumber=b2,
+                loadVector=torque,
+                localPosition=[0,0,0],   #at body's reference point/center
+                bodyFixed=False)
+mbs.CreateTorque(bodyNumber=b2,
+                loadVector=torque2,
                 localPosition=[0,0,0],   #at body's reference point/center
                 bodyFixed=False)
 
