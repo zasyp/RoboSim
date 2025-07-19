@@ -174,30 +174,6 @@ mbs.CreateTorque(bodyNumber=b2,
                 localPosition=[0,0,0],   #at body's reference point/center
                 bodyFixed=False)
 
-# sens0=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint0_pos],
-#                                fileName = 'solution/sensorPos0.txt',
-#                                outputVariableType = exu.OutputVariableType.Torque))
-#
-# sens01=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint0_pos],
-#                                fileName = 'solution/sensorPos01.txt',
-#                                outputVariableType = exu.OutputVariableType.Force))
-#
-# sens1=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint1_pos],
-#                                fileName = 'solution/sensorPos1.txt',
-#                                outputVariableType = exu.OutputVariableType.Torque))
-#
-# sens11=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint1_pos],
-#                                fileName = 'solution/sensorPos11.txt',
-#                                outputVariableType = exu.OutputVariableType.Force))
-#
-# sens2=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint2_pos],
-#                                fileName = 'solution/sensorPos2.txt',
-#                                outputVariableType = exu.OutputVariableType.Torque))
-#
-# sens21=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = [joint2_pos],
-#                                fileName = 'solution/sensorPos21.txt',
-#                                outputVariableType = exu.OutputVariableType.Force))
-
 mbs.Assemble()
 
 tEnd = 10 #simulation time
