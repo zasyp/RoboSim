@@ -59,9 +59,12 @@ inertiaTensorCilinder = np.array([
     [-57566.712025 / 1e9, -20361.408526 / 1e9, 19416649.539239 / 1e9]
 ])
 
+box_graphics = graphics.FromSTLfile('solution/box.stl',
+                                     color=graphics.color.dodgerblue,
+                                     scale=0.001)
 
 
-oGround = mbs.CreateGround(referencePosition=[0,0,0])
+oGround = mbs.CreateGround(referencePosition=[0,-145/1000,-805/1000], graphicsDataList=[box_graphics])
 
 graphicsBody1 = graphics.FromSTLfile('solution/link1.stl',
                                      color=graphics.color.dodgerblue,
@@ -145,7 +148,7 @@ simulationSettings = exu.SimulationSettings() #takes currently set values or def
 
 torque = [0,0,0]
 force = [0,0.05,0]
-vert_force = [0,0,0.05]
+vert_force = [0,0,0.1]
 mbs.CreateForce(bodyNumber=b4,
                 loadVector=vert_force,
                 localPosition=[0, 0, 0], #at tip
