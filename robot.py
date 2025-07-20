@@ -3,6 +3,7 @@ from exudyn.utilities import *
 import exudyn.graphics as graphics
 import numpy as np
 from exudyn.itemInterface import CoordinateSpringDamperExt
+from numpy.ma.core import min_val, max_val
 
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
@@ -137,7 +138,7 @@ markerBody0J0 = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b1, localPosition=joint
 
 # joint'ы
 jointPrismatic = mbs.CreatePrismaticJoint(bodyNumbers=[oGround, b4], position=joint0_pos,
-                         useGlobalFrame=True, axis=[0,0,1],
+                         useGlobalFrame=True, axis=[0,0,0.3],
                          axisRadius=0.2*w, axisLength=300/1000,
                          )
 
