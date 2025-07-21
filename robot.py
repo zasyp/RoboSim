@@ -167,15 +167,15 @@ vert_force = [0,0,0.5]
 #                 localPosition=[0, 0, 0],
 #                 bodyFixed=False)
 
-# mbs.CreateTorque(bodyNumber=b3,
-#                 loadVector=torque,
-#                 localPosition=[0,0,0],
-#                 bodyFixed=False)
-
 mbs.CreateTorque(bodyNumber=b2,
                 loadVector=torque,
                 localPosition=[0,0,0],
-                bodyFixed=True)
+                bodyFixed=False)
+
+# mbs.CreateTorque(bodyNumber=b3,
+#                 loadVector=torque,
+#                 localPosition=[0,0,0],
+#                 bodyFixed=True)
 
 mbs.CreateTorque(bodyNumber=b1,
                 loadVector=torque2,
@@ -202,8 +202,8 @@ theta_constraints23 = mbs.AddObject(CoordinateConstraint(markerNumbers=[link3_ma
 
 mbs.Assemble()
 
-tEnd = 5
-h = 1e-5
+tEnd = 3
+h = 1e-4
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
