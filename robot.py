@@ -2,8 +2,6 @@ import exudyn as exu
 from exudyn.utilities import *
 import exudyn.graphics as graphics
 import numpy as np
-from exudyn.itemInterface import CoordinateSpringDamperExt
-from numpy.ma.core import min_val, max_val
 
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
@@ -24,15 +22,15 @@ w = 0.1
 
 # Положения звеньев
 com_cil_global = np.array([0,0,-300/1000])
-com1_global = np.array([0,0,0])  # Звено 1
-com2_global = np.array([-205/1000, 0, 81 / 1000])  # Звено 2
-com3_global = np.array([-410 / 1000, 0 / 1000, 155 / 1000])  # Звено 3
+com1_global = np.array([0,0,0])
+com2_global = np.array([-205/1000, 0, 81 / 1000])
+com3_global = np.array([-410 / 1000, 0 / 1000, 155 / 1000])
 
 
 joint0_pos = np.array([0, 0, 0])
-joint1_pos = np.array([0, 0, 300])          # Шарнир 0 (основание)
-joint2_pos = np.array([-l1, 0, com2_global[2]])         # Шарнир 1 (между звеном 1 и 2)
-joint3_pos = np.array([-(l1 + l2), 0, com3_global[2]])    # Шарнир 2 (между звеном 2 и 3)
+joint1_pos = np.array([0, 0, 300])
+joint2_pos = np.array([-l1, 0, com2_global[2]])
+joint3_pos = np.array([-(l1 + l2), 0, com3_global[2]])
 
 
 # Расчет положений звеньев в локальных координатах
@@ -133,7 +131,9 @@ iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
     graphicsDataList=[graphicsBody3]
 )
 
-
+link1_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n1, coordinate=6))
+link2_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n2, coordinate=6))
+link3_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n3, coordinate=6))
 
 markerGround = mbs.AddMarker(MarkerBodyRigid(bodyNumber=oGround, localPosition=[0,0,0]))
 markerBody0J0 = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b0, localPosition=joint0_pos))
@@ -155,7 +155,7 @@ jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_p
 
 simulationSettings = exu.SimulationSettings()
 
-
+# Моменты и силы
 torque = [0,0,0.1]
 torque2 = [0,0,-0.05]
 
@@ -164,26 +164,25 @@ vert_force = [0,0,0.5]
 
 # mbs.CreateForce(bodyNumber=b4,
 #                 loadVector=vert_force,
-#                 localPosition=[0, 0, 0], #at tip
-#                 bodyFixed=False) #if True, direction would corotate with body
-#
-# mbs.CreateForce(bodyNumber=b4,
-#                 loadVector=vert_force,
-#                 localPosition=[0, 0, 0], #at tip
-#                 bodyFixed=False) #if True, direction would corotate with body
+#                 localPosition=[0, 0, 0],
+#                 bodyFixed=False)
+
 # mbs.CreateTorque(bodyNumber=b3,
 #                 loadVector=torque,
-#                 localPosition=[0,0,0],   #at body's reference point/center
+#                 localPosition=[0,0,0],
 #                 bodyFixed=False)
+
 mbs.CreateTorque(bodyNumber=b2,
                 loadVector=torque,
-                localPosition=[0,0,0],   #at body's reference point/center
-                bodyFixed=False)
+                localPosition=[0,0,0],
+                bodyFixed=True)
+
 mbs.CreateTorque(bodyNumber=b1,
                 loadVector=torque2,
-                localPosition=[0,0,0],   #at body's reference point/center
-                bodyFixed=False)
+                localPosition=[0,0,0],
+                bodyFixed=True)
 
+# Сенсоры
 joint1_sens=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = joint1_pos,
                                fileName = 'solution/sensorPos.txt',
                                outputVariableType = exu.OutputVariableType.AngularAcceleration))
@@ -197,18 +196,14 @@ joint3_sens=mbs.AddSensor(SensorBody(bodyNumber = b3, localPosition = joint3_pos
                                outputVariableType = exu.OutputVariableType.AngularAcceleration))
 
 # Constraint'ы
-link1_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n1, coordinate=6))
-link2_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n2, coordinate=6))
-link3_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n3, coordinate=6))
-
-mbs.AddObject(CoordinateConstraint(markerNumbers=[link2_marker, link3_marker],
-                                   factorValue1=-0.5, velocityLevel=True))
+theta_constraints23 = mbs.AddObject(CoordinateConstraint(markerNumbers=[link3_marker, link2_marker],
+                                                       factorValue1=-0.5, ))
 
 
 mbs.Assemble()
 
-tEnd = 5 #simulation time
-h = 1e-5 #step size
+tEnd = 5
+h = 1e-5
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
@@ -223,16 +218,16 @@ SC.visualizationSettings.nodes.drawNodesAsPoint = False
 SC.visualizationSettings.nodes.showBasis = True
 
 exu.StartRenderer()
-if 'renderState' in exu.sys: #reload old view
+if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
 
-mbs.WaitForUserToContinue() #stop before simulating
+mbs.WaitForUserToContinue()
 
 mbs.SolveDynamic(simulationSettings = simulationSettings,
                  solverType = exu.DynamicSolverType.TrapezoidalIndex2)
 
 mbs.SolveDynamic(simulationSettings = simulationSettings)
 
-SC.WaitForRenderEngineStopFlag() #stop before closing
-exu.StopRenderer() #safely close rendering window!
+SC.WaitForRenderEngineStopFlag()
+exu.StopRenderer()
 mbs.SolutionViewer()
