@@ -91,7 +91,7 @@ i3 = RigidBodyInertia(mass=m3, inertiaTensor=inertiaTensor3)
 iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
 
 # Ввод звеньев ([номер node, номер body])
-[n1, b1] = AddRigidBody(
+[n0, b0] = AddRigidBody(
     mainSys=mbs,
     inertia=iCilinder,
     nodeType=str(exu.NodeType.RotationEulerParameters),
@@ -101,7 +101,7 @@ iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
     graphicsDataList=[graphicsBodyCilinder]
 )
 
-[n2, b2] = AddRigidBody(
+[n1, b1] = AddRigidBody(
     mainSys=mbs,
     inertia=i1,
     nodeType=str(exu.NodeType.RotationEulerParameters),
@@ -112,7 +112,7 @@ iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
 )
 
 
-[n3, b3] = AddRigidBody(
+[n2, b2] = AddRigidBody(
     mainSys=mbs,
     inertia=i2,
     nodeType=str(exu.NodeType.RotationEulerParameters),
@@ -123,7 +123,7 @@ iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
 )
 
 
-[n4, b4] = AddRigidBody(
+[n3, b3] = AddRigidBody(
     mainSys=mbs,
     inertia=i3,
     nodeType=str(exu.NodeType.RotationEulerParameters),
@@ -136,21 +136,21 @@ iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
 
 
 markerGround = mbs.AddMarker(MarkerBodyRigid(bodyNumber=oGround, localPosition=[0,0,0]))
-markerBody0J0 = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b1, localPosition=joint0_pos))
+markerBody0J0 = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b0, localPosition=joint0_pos))
 
 # joint'ы
-jointPrismatic = mbs.CreatePrismaticJoint(bodyNumbers=[oGround, b1], position=joint0_pos,
+jointPrismatic = mbs.CreatePrismaticJoint(bodyNumbers=[oGround, b0], position=joint0_pos,
                          useGlobalFrame=True, axis=[0,0,0.3],
                          axisRadius=0.2*w, axisLength=300/1000,
                          )
 
-jointRevolute1 = mbs.CreateRevoluteJoint(bodyNumbers=[b1, b2], position=joint1_pos,
+jointRevolute1 = mbs.CreateRevoluteJoint(bodyNumbers=[b0, b1], position=joint1_pos,
                         axis=[0,0,1], axisRadius=0.2*w, axisLength=1*w)
 
-jointRevolute2 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint2_pos,
+jointRevolute2 = mbs.CreateRevoluteJoint(bodyNumbers=[b1, b2], position=joint2_pos,
                         axis=[0,0,1], axisRadius=0.2*w, axisLength=1*w)
 
-jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b3, b4], position=joint3_pos,
+jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_pos,
                         axis=[0,0,1], axisRadius=0.2*w, axisLength=0.3*w)
 
 simulationSettings = exu.SimulationSettings()
@@ -171,18 +171,18 @@ vert_force = [0,0,0.5]
 #                 loadVector=vert_force,
 #                 localPosition=[0, 0, 0], #at tip
 #                 bodyFixed=False) #if True, direction would corotate with body
-# mbs.CreateTorque(bodyNumber=b1,
+# mbs.CreateTorque(bodyNumber=b3,
 #                 loadVector=torque,
 #                 localPosition=[0,0,0],   #at body's reference point/center
 #                 bodyFixed=False)
-mbs.CreateTorque(bodyNumber=b3,
+mbs.CreateTorque(bodyNumber=b2,
                 loadVector=torque,
                 localPosition=[0,0,0],   #at body's reference point/center
                 bodyFixed=False)
-# mbs.CreateTorque(bodyNumber=b2,
-#                 loadVector=torque2,
-#                 localPosition=[0,0,0],   #at body's reference point/center
-#                 bodyFixed=False)
+mbs.CreateTorque(bodyNumber=b1,
+                loadVector=torque2,
+                localPosition=[0,0,0],   #at body's reference point/center
+                bodyFixed=False)
 
 joint1_sens=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = joint1_pos,
                                fileName = 'solution/sensorPos.txt',
@@ -196,31 +196,43 @@ joint3_sens=mbs.AddSensor(SensorBody(bodyNumber = b3, localPosition = joint3_pos
                                fileName = 'solution/sensorPos.txt',
                                outputVariableType = exu.OutputVariableType.AngularAcceleration))
 
+# Constraint'ы
+link1_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n1, coordinate=6))
+link2_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n2, coordinate=6))
+link3_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n3, coordinate=6))
+
+mbs.AddObject(CoordinateConstraint(markerNumbers=[link2_marker, link3_marker],
+                                   factorValue1=-0.5, velocityLevel=True))
+
+
 mbs.Assemble()
 
-tEnd = 1 #simulation time
+tEnd = 5 #simulation time
 h = 1e-5 #step size
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
 simulationSettings.timeIntegration.simulateInRealtime = True
-simulationSettings.solutionSettings.solutionWritePeriod = 0.005 #store every 5 ms
+simulationSettings.solutionSettings.solutionWritePeriod = 0.005
 
 SC.visualizationSettings.window.renderWindowSize = [1600,1200]
-SC.visualizationSettings.openGL.multiSampling = 4  #improved OpenGL rendering
+SC.visualizationSettings.openGL.multiSampling = 4
 SC.visualizationSettings.general.autoFitScene = False
 
 SC.visualizationSettings.nodes.drawNodesAsPoint = False
-SC.visualizationSettings.nodes.showBasis = True #shows three RGB (=xyz) lines for node basis
+SC.visualizationSettings.nodes.showBasis = True
 
 exu.StartRenderer()
 if 'renderState' in exu.sys: #reload old view
     SC.SetRenderState(exu.sys['renderState'])
 
 mbs.WaitForUserToContinue() #stop before simulating
+
 mbs.SolveDynamic(simulationSettings = simulationSettings,
                  solverType = exu.DynamicSolverType.TrapezoidalIndex2)
+
 mbs.SolveDynamic(simulationSettings = simulationSettings)
+
 SC.WaitForRenderEngineStopFlag() #stop before closing
 exu.StopRenderer() #safely close rendering window!
 mbs.SolutionViewer()
