@@ -2,6 +2,7 @@ import exudyn as exu
 from exudyn.utilities import *
 import exudyn.graphics as graphics
 import numpy as np
+from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, ProfilePTP
 
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
@@ -130,7 +131,8 @@ iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
     gravity=g,
     graphicsDataList=[graphicsBody3]
 )
-
+# Маркеры для суставов
+link0_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n0, coordinate=3))
 link1_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n1, coordinate=6))
 link2_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n2, coordinate=6))
 link3_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber= n3, coordinate=6))
@@ -156,49 +158,69 @@ jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_p
 simulationSettings = exu.SimulationSettings()
 
 # Моменты и силы
-torque = [0,0,0.1]
-torque2 = [0,0,-0.05]
-
-force = [0,0.05,0]
-vert_force = [0,0,0.5]
-
+# torque = [0,0,0.1]
+# torque2 = [0,0,-0.05]
+#
+# force = [0,0.05,0]
+# vert_force = [0,0,0.5]
+#
 # mbs.CreateForce(bodyNumber=b4,
 #                 loadVector=vert_force,
 #                 localPosition=[0, 0, 0],
 #                 bodyFixed=False)
-
-mbs.CreateTorque(bodyNumber=b2,
-                loadVector=torque,
-                localPosition=[0,0,0],
-                bodyFixed=False)
-
+#
+# mbs.CreateTorque(bodyNumber=b2,
+#                 loadVector=torque,
+#                 localPosition=[0,0,0],
+#                 bodyFixed=False)
+#
 # mbs.CreateTorque(bodyNumber=b3,
 #                 loadVector=torque,
 #                 localPosition=[0,0,0],
 #                 bodyFixed=True)
-
-mbs.CreateTorque(bodyNumber=b1,
-                loadVector=torque2,
-                localPosition=[0,0,0],
-                bodyFixed=True)
+#
+# mbs.CreateTorque(bodyNumber=b1,
+#                 loadVector=torque2,
+#                 localPosition=[0,0,0],
+#                 bodyFixed=True)
 
 # Сенсоры
-joint1_sens=mbs.AddSensor(SensorBody(bodyNumber = b1, localPosition = joint1_pos,
-                               fileName = 'solution/sensorPos.txt',
-                               outputVariableType = exu.OutputVariableType.AngularAcceleration))
-
-joint2_sens=mbs.AddSensor(SensorBody(bodyNumber = b2, localPosition = joint2_pos,
-                               fileName = 'solution/sensorPos.txt',
-                               outputVariableType = exu.OutputVariableType.AngularAcceleration))
-
-joint3_sens=mbs.AddSensor(SensorBody(bodyNumber = b3, localPosition = joint3_pos,
-                               fileName = 'solution/sensorPos.txt',
-                               outputVariableType = exu.OutputVariableType.AngularAcceleration))
+joint0_sens = mbs.AddSensor(SensorBody(bodyNumber=b0,
+                                       localPosition=joint0_pos,
+                                       fileName='solution/sensorPos0.txt',
+                                       outputVariableType=exu.OutputVariableType.Position))
+joint1_sens = mbs.AddSensor(SensorBody(bodyNumber = b1,
+                                     localPosition = joint1_pos,
+                                     fileName = 'solution/sensorPos.txt',
+                                     outputVariableType = exu.OutputVariableType.Rotation))
+joint2_sens = mbs.AddSensor(SensorBody(bodyNumber = b2,
+                                     localPosition = joint2_pos,
+                                     fileName = 'solution/sensorPos.txt',
+                                     outputVariableType = exu.OutputVariableType.Rotation))
+joint3_sens = mbs.AddSensor(SensorBody(bodyNumber = b3,
+                                     localPosition = joint3_pos,
+                                     fileName = 'solution/sensorPos.txt',
+                                     outputVariableType = exu.OutputVariableType.Rotation))
 
 # Constraint'ы
 theta_constraints23 = mbs.AddObject(CoordinateConstraint(markerNumbers=[link3_marker, link2_marker],
                                                        factorValue1=-0.5, ))
 
+q0 = [0, 0, 0]  # начальные значения [d1, theta1, theta2]
+q1 = [0.1, np.pi/2, np.pi/4]  # конечные значения [d1=0.1 м, theta1=π/2, theta2=π/4]
+
+trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
+trajectory.Add(ProfileConstantAcceleration(q1, duration=1))  # Движение к q1 за 1 сек
+trajectory.Add(ProfileConstantAcceleration(q1, duration=2))  # Удержание позиции до конца (3 сек)
+
+def PreStepUF(mbs, t):
+    [u, v, a] = trajectory.Evaluate(t)  # Получаем координаты, скорости, ускорения
+    mbs.SetNodeParameter(link0_marker, 'offset', u[0])  # d1
+    mbs.SetNodeParameter(link1_marker, 'offset', u[1])  # theta1
+    mbs.SetNodeParameter(link2_marker, 'offset', u[2])  # theta2
+    return True
+
+mbs.SetPreStepUserFunction(PreStepUF)
 
 mbs.Assemble()
 
@@ -217,7 +239,7 @@ SC.visualizationSettings.general.autoFitScene = False
 SC.visualizationSettings.nodes.drawNodesAsPoint = False
 SC.visualizationSettings.nodes.showBasis = True
 
-exu.StartRenderer()
+SC.renderer.Start()
 if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
 
