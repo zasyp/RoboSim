@@ -26,7 +26,7 @@ com2_global = np.array([-205/1000, 0, 81/1000])
 com3_global = np.array([-410/1000, 0, 155/1000])
 
 joint0_pos = np.array([0, 0, 0])
-joint1_pos = np.array([0, 0, 300/1000])
+joint1_pos = np.array([0, 0, 0/1000])
 joint2_pos = np.array([-l1, 0, com2_global[2]])
 joint3_pos = np.array([-(l1 + l2), 0, com3_global[2]])
 
@@ -183,8 +183,8 @@ mbs.AddSensor(SensorBody(
 q0 = [0, 0, 0]  # Initial [d1, theta1, theta2]
 q1 = [0.1, np.pi/2, np.pi/4]  # Final
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
+trajectory.Add(ProfileConstantAcceleration(q1, duration=0.5))
 trajectory.Add(ProfileConstantAcceleration(q1, duration=1))
-trajectory.Add(ProfileConstantAcceleration(q1, duration=2))
 
 # PreStep user function
 def PreStepUF(mbs, t):
@@ -197,7 +197,7 @@ def PreStepUF(mbs, t):
 mbs.SetPreStepUserFunction(PreStepUF)
 
 # Simulation settings
-tEnd = 3
+tEnd = 5
 h = 1e-4
 simulationSettings = exu.SimulationSettings()
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
