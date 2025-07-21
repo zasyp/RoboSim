@@ -220,6 +220,6 @@ if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
 SC.renderer.DoIdleTasks()
 mbs.SolveDynamic(simulationSettings=simulationSettings, solverType=exu.DynamicSolverType.TrapezoidalIndex2)
-SC.WaitForRenderEngineStopFlag()
-exu.StopRenderer()
+SC.renderer.DoIdleTasks()
+SC.renderer.Stop()
 mbs.SolutionViewer()
