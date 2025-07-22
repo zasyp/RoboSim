@@ -130,8 +130,8 @@ jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_p
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
-tEnd = 6
-h = 1e-4
+tEnd = 60
+h = 1e-3
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
@@ -161,6 +161,23 @@ theta_constraints23 = mbs.AddObject(CoordinateConstraint(
     factorValue1=-0.5
 ))
 
+trajectoryDuration = 2
+
+# === Параметры удержания (поменять согласно двигателю и редуктору) ===
+Kp_d1 = 5000     # N/m
+Kd_d1 = 200      # N·s/m
+maxF_d1 = 1e4    # N
+
+Kp_t1 = 300      # N·m/rad
+Kd_t1 = 5        # N·m·s/rad
+maxM_t1 = 200    # N·m
+
+Kp_t2 = 300      # N·m/rad
+Kd_t2 = 5        # N·m·s/rad
+maxM_t2 = 200    # N·m
+
+t_end = trajectoryDuration
+
 # Trajectory
 q0 = [0, 0, 0]  # Initial [d1, theta1, theta2]
 q1 = [0.1, np.pi/2, np.pi/4]  # Final [d1=0.1m, theta1=π/2, theta2=π/4]
@@ -169,17 +186,46 @@ trajectory.Add(ProfileConstantAcceleration(q1, duration=1))  # Move to q1 in 1s
 trajectory.Add(ProfileConstantAcceleration(q1, duration=2))  # Hold for 2s
 trajectory.Add(ProfilePTP(q1,syncAccTimes=False, maxVelocities=[1,1,1], maxAccelerations=[1,1,1]))
 
-# PreStep user function to control motion
-def PreStepUF(mbs, t):
-    [u, v, a] = trajectory.Evaluate(t)  # u = [d1, theta1, theta2]
 
-    mbs.SetNodeParameter(n0, 'offset', u[0])
-    mbs.SetNodeParameter(n1, 'offset', u[1])
-    mbs.SetNodeParameter(n2, 'offset', u[2])
+def drive_d1(mbs, t, load):
+    if t <= t_end:
+        u, _, _ = trajectory.Evaluate(t)
+        # Силу по траектории просто масштабируем
+        return np.clip(u[0]*Kp_d1, -maxF_d1, maxF_d1)
+    # Получаем текущее положение и скорость
+    pos = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates)[2]
+    vel = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates_t)[2]
+    err = q1[0] - pos
+    control = Kp_d1*err - Kd_d1*vel
+    return np.clip(control, -maxF_d1, maxF_d1)
 
-    return True
+def drive_t1(mbs, t, load):
+    if t <= t_end:
+        u, _, _ = trajectory.Evaluate(t)
+        return np.clip(u[1]*Kp_t1, -maxM_t1, maxM_t1)
+    angle = mbs.GetNodeOutput(n1, exu.OutputVariableType.Coordinates)[5]
+    omega = mbs.GetNodeOutput(n1, exu.OutputVariableType.Coordinates_t)[5]
+    err = q1[1] - angle
+    control = Kp_t1*err - Kd_t1*omega
+    return np.clip(control, -maxM_t1, maxM_t1)
 
-mbs.SetPreStepUserFunction(PreStepUF)
+def drive_t2(mbs, t, load):
+    if t <= t_end:
+        u, _, _ = trajectory.Evaluate(t)
+        return np.clip(u[2]*Kp_t2, -maxM_t2, maxM_t2)
+    angle = mbs.GetNodeOutput(n2, exu.OutputVariableType.Coordinates)[5]
+    omega = mbs.GetNodeOutput(n2, exu.OutputVariableType.Coordinates_t)[5]
+    err = q1[2] - angle
+    control = Kp_t2*err - Kd_t2*omega
+    return np.clip(control, -maxM_t2, maxM_t2)
+# === Маркеры для управления ===
+marker_d1 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n0, coordinate=2))  # prizma Z
+marker_t1 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n1, coordinate=6))  # rot1 Z
+marker_t2 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n2, coordinate=6))  # rot2 Z
+
+mbs.AddLoad(LoadCoordinate(markerNumber=marker_d1, load=0, loadUserFunction=drive_d1))
+mbs.AddLoad(LoadCoordinate(markerNumber=marker_t1, load=0, loadUserFunction=drive_t1))
+mbs.AddLoad(LoadCoordinate(markerNumber=marker_t2, load=0, loadUserFunction=drive_t2))
 
 # Assemble and simulate
 mbs.Assemble()
