@@ -164,17 +164,17 @@ theta_constraints23 = mbs.AddObject(CoordinateConstraint(
 trajectoryDuration = 1
 
 # Drive parameters (поменять согласно двигателю и редуктору)
-Kp_d1 = 200     # N/m
-Kd_d1 = 1e4      # N·s/m
-maxF_d1 = 1e4    # N
+Kp_d = 200     # N/m
+Kd_d = 1e4      # N·s/m
+maxF_d = 1e4    # N
 
 Kp_t1 = 300      # N·m/rad
-Kd_t1 = 1e4        # N·m·s/rad
-maxM_t1 = 1200    # N·m
+Kd_t1 = 1e10        # N·m·s/rad
+maxM_t1 = 1e200    # N·m
 
 Kp_t2 = 300      # N·m/rad
-Kd_t2 = 1e4        # N·m·s/rad
-maxM_t2 = 200    # N·m
+Kd_t2 = 1e10        # N·m·s/rad
+maxM_t2 = 1e200    # N·m
 
 t_end = trajectoryDuration
 
@@ -188,34 +188,51 @@ trajectory.Add(ProfilePTP(q1,syncAccTimes=False, maxVelocities=[1,1,1], maxAccel
 
 
 def drive_d1(mbs, t, load):
-    if t <= t_end:
+    # Считаем текущую координату и ошибку по позиции в линейном звене
+    pos = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates)[2]  # d1 - 3-я координата
+    err = abs(q1[0] - pos)
+    tol = 1e-3  # допустимая погрешность в метрах
+
+    if err > tol:
+        # Пока не достигли нужной позиции — управление по траектории (feed-forward)
         u, _, _ = trajectory.Evaluate(t)
-        return np.clip(u[0]*Kp_d1, -maxF_d1, maxF_d1)
-    pos = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates)[2]
-    vel = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates_t)[2]
-    err = q1[0] - pos
-    control = Kp_d1*err - Kd_d1*vel*1e5
-    return np.clip(control, -maxF_d1, maxF_d1)
+        return float(np.clip(u[0] * Kp_d, -maxF_d, maxF_d))
+    else:
+        # Если достигли цели — включаем ПД стабилизацию
+        vel = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates_t)[2]
+        err_dot = -vel
+        control = Kp_d * (q1[0] - pos) + Kd_d * err_dot
+        return float(np.clip(control, -maxF_d, maxF_d))
+
 
 def drive_t1(mbs, t, load):
-    if t <= t_end:
-        u, _, _ = trajectory.Evaluate(t)
-        return np.clip(u[1]*Kp_t1, -maxM_t1, maxM_t1)
     angle = mbs.GetNodeOutput(n1, exu.OutputVariableType.Coordinates)[5]
-    omega = mbs.GetNodeOutput(n1, exu.OutputVariableType.Coordinates_t)[5]
-    err = q1[1] - angle
-    control = Kp_t1*err - Kd_t1*omega*1e6
-    return np.clip(control, -maxM_t1, maxM_t1)
+    err = abs(q1[1] - angle)
+    tol = 1e-2  # допустимая погрешность по углу (примерно 0.01 рад ~0.57 град)
+
+    if err > tol:
+        u, _, _ = trajectory.Evaluate(t)
+        return float(np.clip(u[1] * Kp_t1, -maxM_t1, maxM_t1))
+    else:
+        omega = mbs.GetNodeOutput(n1, exu.OutputVariableType.Coordinates_t)[5]
+        err_dot = -omega
+        control = Kp_t1 * (q1[1] - angle) + Kd_t1 * err_dot
+        return float(np.clip(control, -maxM_t1, maxM_t1))
+
 
 def drive_t2(mbs, t, load):
-    if t <= t_end:
-        u, _, _ = trajectory.Evaluate(t)
-        return np.clip(u[2]*Kp_t2, -maxM_t2, maxM_t2)
     angle = mbs.GetNodeOutput(n2, exu.OutputVariableType.Coordinates)[5]
-    omega = mbs.GetNodeOutput(n2, exu.OutputVariableType.Coordinates_t)[5]
-    err = q1[2] - angle
-    control = Kp_t2*err - Kd_t2*omega*1e6
-    return np.clip(control, -maxM_t2, maxM_t2)
+    err = abs(q1[2] - angle)
+    tol = 1e-2
+
+    if err > tol:
+        u, _, _ = trajectory.Evaluate(t)
+        return float(np.clip(u[2] * Kp_t2, -maxM_t2, maxM_t2))
+    else:
+        omega = mbs.GetNodeOutput(n2, exu.OutputVariableType.Coordinates_t)[5]
+        err_dot = -omega
+        control = Kp_t2 * (q1[2] - angle) + Kd_t2 * err_dot
+        return float(np.clip(control, -maxM_t2, maxM_t2))
 
 # Adding loads to joints
 mbs.AddLoad(LoadCoordinate(markerNumber=link0_marker, load=0, loadUserFunction=drive_d1))
