@@ -180,7 +180,7 @@ t_end = trajectoryDuration
 
 # Trajectory
 q0 = [0, 0, 0]  # Initial [d1, theta1, theta2]
-q1 = [0.1, np.pi/2, np.pi/4]  # Final [d1=0.1m, theta1=π/2, theta2=π/4]
+q1 = [0.1, np.pi, np.pi/2]  # Final [d1=0.1m, theta1=π/2, theta2=π/4]
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 trajectory.Add(ProfileConstantAcceleration(q1, duration=1))  # Move to q1 in 1s
 trajectory.Add(ProfileConstantAcceleration(q1, duration=2))  # Hold for 2s
