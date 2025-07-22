@@ -227,7 +227,7 @@ mbs.Assemble()
 SC.renderer.Start()
 if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
-SC.renderer.DoIdleTasks()  # Modern replacement for WaitForUserToContinue
+SC.renderer.DoIdleTasks()
 
 mbs.SolveDynamic(simulationSettings=simulationSettings, solverType=exu.DynamicSolverType.TrapezoidalIndex2)
 
