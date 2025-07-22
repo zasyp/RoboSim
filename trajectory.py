@@ -156,7 +156,10 @@ mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, fileName='solu
                          outputVariableType=exu.OutputVariableType.Rotation))
 
 # Constraints
-theta_constraints23 = mbs.AddObject(CoordinateConstraint(markerNumbers=[link3_marker, link2_marker], factorValue1=-0.5))
+theta_constraints23 = mbs.AddObject(CoordinateConstraint(
+    markerNumbers=[link3_marker, link2_marker],
+    factorValue1=-0.5
+))
 
 # Trajectory
 q0 = [0, 0, 0]  # Initial [d1, theta1, theta2]
@@ -165,25 +168,11 @@ trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 trajectory.Add(ProfileConstantAcceleration(q1, duration=1))  # Move to q1 in 1s
 trajectory.Add(ProfileConstantAcceleration(q1, duration=2))  # Hold for 2s
 
+
 # PreStep user function to control motion
 def PreStepUF(mbs, t):
     [u, v, a] = trajectory.Evaluate(t)  # u = [d1, theta1, theta2]
-    # Prismatic joint: set Z-position of node n0 (coordinate 2)
-    mbs.SetNodeParameter(n0, 'coordinate', 2, u[0])  # d1
-    # Revolute joint 1: set rotation of n1 around Z using Euler parameters
-    e0_1 = np.cos(u[1]/2)  # theta1
-    e3_1 = np.sin(u[1]/2)
-    mbs.SetNodeParameter(n1, 'coordinate', 3, e0_1)  # e0
-    mbs.SetNodeParameter(n1, 'coordinate', 4, 0)     # e1
-    mbs.SetNodeParameter(n1, 'coordinate', 5, 0)     # e2
-    mbs.SetNodeParameter(n1, 'coordinate', 6, e3_1)  # e3
-    # Revolute joint 2: set rotation of n2 around Z (cumulative theta1 + theta2)
-    e0_2 = np.cos((u[1] + u[2])/2)  # theta1 + theta2
-    e3_2 = np.sin((u[1] + u[2])/2)
-    mbs.SetNodeParameter(n2, 'coordinate', 3, e0_2)  # e0
-    mbs.SetNodeParameter(n2, 'coordinate', 4, 0)     # e1
-    mbs.SetNodeParameter(n2, 'coordinate', 5, 0)     # e2
-    mbs.SetNodeParameter(n2, 'coordinate', 6, e3_2)  # e3
+
     return True
 
 mbs.SetPreStepUserFunction(PreStepUF)
