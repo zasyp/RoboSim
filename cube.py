@@ -31,7 +31,7 @@ graphicsCOM0 = graphics.Basis(origin=iCube0.com, length=a)
     graphicsDataList=[graphicsBody0])
 
 jointPrismatic = mbs.CreatePrismaticJoint(bodyNumbers=[oGround, b0], position=joint0_pos,
-                                          useGlobalFrame=True, axis=[0, 0, 1],  # Z-axis
+                                          useGlobalFrame=True, axis=[1, 0, 0],  # Z-axis
                                           axisRadius=0.02*a, axisLength=20)
 
 
@@ -65,7 +65,7 @@ def drive_d1(mbs, t, load):
         control = Kp_d * (q1[0] - pos) + Kd_d * err_dot
         return float(np.clip(control, -maxF_d, maxF_d))
 
-link0_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n0, coordinate=2))  # Z-position for prismatic joint
+link0_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n0, coordinate=0))  # Z-position for prismatic joint
 
 mbs.AddLoad(LoadCoordinate(markerNumber=link0_marker, load=0, loadUserFunction=drive_d1))
 
