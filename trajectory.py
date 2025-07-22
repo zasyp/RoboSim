@@ -168,13 +168,13 @@ Kp_d = 200     # N/m
 Kd_d = 1e4      # N·s/m
 maxF_d = 1e4    # N
 
-Kp_t1 = 300      # N·m/rad
-Kd_t1 = 1e10        # N·m·s/rad
-maxM_t1 = 1e200    # N·m
+Kp_t1 = 30      # N·m/rad
+Kd_t1 = 1e6       # N·m·s/rad
+maxM_t1 = 1e6    # N·m
 
-Kp_t2 = 300      # N·m/rad
-Kd_t2 = 1e10        # N·m·s/rad
-maxM_t2 = 1e200    # N·m
+Kp_t2 = 30      # N·m/rad
+Kd_t2 = 1e6       # N·m·s/rad
+maxM_t2 = 1e6    # N·m
 
 t_end = trajectoryDuration
 
