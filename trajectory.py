@@ -26,7 +26,7 @@ com2_global = np.array([-205/1000, 0, 81/1000])
 com3_global = np.array([-410/1000, 0, 155/1000])
 
 joint0_pos = np.array([0, 0, 0])
-joint1_pos = np.array([0, 0, 300/1000])  # Corrected units (meters)
+joint1_pos = np.array([0, 0, 300/1000-0.1])  # Corrected units (meters)
 joint2_pos = np.array([-l1, 0, com2_global[2]])
 joint3_pos = np.array([-(l1 + l2), 0, com3_global[2]])
 
@@ -130,8 +130,8 @@ jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_p
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
-tEnd = 60
-h = 1e-3
+tEnd = 3
+h = 1e-4
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
@@ -161,19 +161,19 @@ theta_constraints23 = mbs.AddObject(CoordinateConstraint(
     factorValue1=-0.5
 ))
 
-trajectoryDuration = 2
+trajectoryDuration = 1
 
 # Drive parameters (поменять согласно двигателю и редуктору)
-Kp_d1 = 5000     # N/m
-Kd_d1 = 200      # N·s/m
+Kp_d1 = 200     # N/m
+Kd_d1 = 1e4      # N·s/m
 maxF_d1 = 1e4    # N
 
 Kp_t1 = 300      # N·m/rad
-Kd_t1 = 5        # N·m·s/rad
-maxM_t1 = 200    # N·m
+Kd_t1 = 1e4        # N·m·s/rad
+maxM_t1 = 1200    # N·m
 
 Kp_t2 = 300      # N·m/rad
-Kd_t2 = 5        # N·m·s/rad
+Kd_t2 = 1e4        # N·m·s/rad
 maxM_t2 = 200    # N·m
 
 t_end = trajectoryDuration
@@ -194,7 +194,7 @@ def drive_d1(mbs, t, load):
     pos = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates)[2]
     vel = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates_t)[2]
     err = q1[0] - pos
-    control = Kp_d1*err - Kd_d1*vel
+    control = Kp_d1*err - Kd_d1*vel*1e5
     return np.clip(control, -maxF_d1, maxF_d1)
 
 def drive_t1(mbs, t, load):
@@ -204,7 +204,7 @@ def drive_t1(mbs, t, load):
     angle = mbs.GetNodeOutput(n1, exu.OutputVariableType.Coordinates)[5]
     omega = mbs.GetNodeOutput(n1, exu.OutputVariableType.Coordinates_t)[5]
     err = q1[1] - angle
-    control = Kp_t1*err - Kd_t1*omega
+    control = Kp_t1*err - Kd_t1*omega*1e6
     return np.clip(control, -maxM_t1, maxM_t1)
 
 def drive_t2(mbs, t, load):
@@ -214,7 +214,7 @@ def drive_t2(mbs, t, load):
     angle = mbs.GetNodeOutput(n2, exu.OutputVariableType.Coordinates)[5]
     omega = mbs.GetNodeOutput(n2, exu.OutputVariableType.Coordinates_t)[5]
     err = q1[2] - angle
-    control = Kp_t2*err - Kd_t2*omega
+    control = Kp_t2*err - Kd_t2*omega*1e6
     return np.clip(control, -maxM_t2, maxM_t2)
 
 # Adding loads to joints
