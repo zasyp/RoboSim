@@ -40,8 +40,8 @@ Kp_d = 200    # N/m
 Kd_d = 1e4      # N·s/m
 maxF_d = 1e4    # N
 
-q0 = [0, 0, 0]  # Initial [d1, theta1, theta2]
-q1 = [90, 0, 0]  # Final [d1=0.1m, theta1=π/2, theta2=π/4]
+q0 = [0, 0, 0]
+q1 = [90, 0, 0]
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 trajectory.Add(ProfileConstantAcceleration(q1, duration=1))  # Move to q1 in 1s
 trajectory.Add(ProfileConstantAcceleration(q1, duration=2))  # Hold for 2s
