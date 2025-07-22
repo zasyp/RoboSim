@@ -163,7 +163,7 @@ theta_constraints23 = mbs.AddObject(CoordinateConstraint(
 
 trajectoryDuration = 2
 
-# === Параметры удержания (поменять согласно двигателю и редуктору) ===
+# Drive parameters (поменять согласно двигателю и редуктору)
 Kp_d1 = 5000     # N/m
 Kd_d1 = 200      # N·s/m
 maxF_d1 = 1e4    # N
@@ -190,9 +190,7 @@ trajectory.Add(ProfilePTP(q1,syncAccTimes=False, maxVelocities=[1,1,1], maxAccel
 def drive_d1(mbs, t, load):
     if t <= t_end:
         u, _, _ = trajectory.Evaluate(t)
-        # Силу по траектории просто масштабируем
         return np.clip(u[0]*Kp_d1, -maxF_d1, maxF_d1)
-    # Получаем текущее положение и скорость
     pos = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates)[2]
     vel = mbs.GetNodeOutput(n0, exu.OutputVariableType.Coordinates_t)[2]
     err = q1[0] - pos
@@ -218,14 +216,11 @@ def drive_t2(mbs, t, load):
     err = q1[2] - angle
     control = Kp_t2*err - Kd_t2*omega
     return np.clip(control, -maxM_t2, maxM_t2)
-# === Маркеры для управления ===
-marker_d1 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n0, coordinate=2))  # prizma Z
-marker_t1 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n1, coordinate=6))  # rot1 Z
-marker_t2 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n2, coordinate=6))  # rot2 Z
 
-mbs.AddLoad(LoadCoordinate(markerNumber=marker_d1, load=0, loadUserFunction=drive_d1))
-mbs.AddLoad(LoadCoordinate(markerNumber=marker_t1, load=0, loadUserFunction=drive_t1))
-mbs.AddLoad(LoadCoordinate(markerNumber=marker_t2, load=0, loadUserFunction=drive_t2))
+# Adding loads to joints
+mbs.AddLoad(LoadCoordinate(markerNumber=link0_marker, load=0, loadUserFunction=drive_d1))
+mbs.AddLoad(LoadCoordinate(markerNumber=link1_marker, load=0, loadUserFunction=drive_t1))
+mbs.AddLoad(LoadCoordinate(markerNumber=link2_marker, load=0, loadUserFunction=drive_t2))
 
 # Assemble and simulate
 mbs.Assemble()
