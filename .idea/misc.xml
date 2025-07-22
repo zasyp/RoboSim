@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.13 (exudyn)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (exudyn)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (RoboSIm)" project-jdk-type="Python SDK" />
 </project>
