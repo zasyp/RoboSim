@@ -130,7 +130,7 @@ jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_p
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
-tEnd = 3
+tEnd = 6
 h = 1e-4
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
@@ -167,11 +167,15 @@ q1 = [0.1, np.pi/2, np.pi/4]  # Final [d1=0.1m, theta1=π/2, theta2=π/4]
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 trajectory.Add(ProfileConstantAcceleration(q1, duration=1))  # Move to q1 in 1s
 trajectory.Add(ProfileConstantAcceleration(q1, duration=2))  # Hold for 2s
-
+trajectory.Add(ProfilePTP(q1,syncAccTimes=False, maxVelocities=[1,1,1], maxAccelerations=[1,1,1]))
 
 # PreStep user function to control motion
 def PreStepUF(mbs, t):
     [u, v, a] = trajectory.Evaluate(t)  # u = [d1, theta1, theta2]
+
+    mbs.SetNodeParameter(n0, 'offset', u[0])
+    mbs.SetNodeParameter(n1, 'offset', u[1])
+    mbs.SetNodeParameter(n2, 'offset', u[2])
 
     return True
 
