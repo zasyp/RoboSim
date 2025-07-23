@@ -6,7 +6,7 @@ from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, Prof
 from helpful.constants import *
 
 q0 = [0,0,0]
-q1 = [0.2,np.pi/4,np.pi/2]
+q1 = [0.2,-np.pi/2,np.pi/2]
 
 # Initialize SystemContainer and MainSystem
 SC = exu.SystemContainer()
@@ -118,7 +118,11 @@ omega3_sens = mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, 
 # Constraints
 theta_constraints23 = mbs.AddObject(CoordinateConstraint(
     markerNumbers=[link3_marker, link2_marker],
-    factorValue1=-0.5
+    factorValue1=0.5
+))
+theta_constraints23 = mbs.AddObject(CoordinateConstraint(
+    markerNumbers=[link3_marker, link1_marker],
+    factorValue1=-1
 ))
 
 
