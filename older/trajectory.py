@@ -57,11 +57,11 @@ inertiaTensorCilinder = np.array([
 ])
 
 # Graphics from STL files
-box_graphics = graphics.FromSTLfile('solution/box.stl', color=graphics.color.blue, scale=0.001)
-graphicsBody1 = graphics.FromSTLfile('solution/link1.stl', color=graphics.color.dodgerblue, scale=0.001)
-graphicsBody2 = graphics.FromSTLfile('solution/link2.stl', color=graphics.color.red, scale=0.001)
-graphicsBody3 = graphics.FromSTLfile('solution/link3.stl', color=graphics.color.dodgerblue, scale=0.001)
-graphicsBodyCilinder = graphics.FromSTLfile('solution/cilinder.stl', color=graphics.color.dodgerblue, scale=0.001)
+box_graphics = graphics.FromSTLfile('../graphics/box.stl', color=graphics.color.blue, scale=0.001)
+graphicsBody1 = graphics.FromSTLfile('../graphics/link1.stl', color=graphics.color.dodgerblue, scale=0.001)
+graphicsBody2 = graphics.FromSTLfile('../graphics/link2.stl', color=graphics.color.red, scale=0.001)
+graphicsBody3 = graphics.FromSTLfile('../graphics/link3.stl', color=graphics.color.dodgerblue, scale=0.001)
+graphicsBodyCilinder = graphics.FromSTLfile('../graphics/cilinder.stl', color=graphics.color.dodgerblue, scale=0.001)
 
 # Ground and bodies
 oGround = mbs.CreateGround(referencePosition=[0, -145/1000, -805/1000], graphicsDataList=[box_graphics])
@@ -146,13 +146,13 @@ SC.visualizationSettings.nodes.drawNodesAsPoint = False
 SC.visualizationSettings.nodes.showBasis = True
 
 # Sensors
-mbs.AddSensor(SensorBody(bodyNumber=b0, localPosition=joint0_pos, fileName='solution/sensorPos0.txt',
+mbs.AddSensor(SensorBody(bodyNumber=b0, localPosition=joint0_pos, fileName='../solution/sensorPos0.txt',
                          outputVariableType=exu.OutputVariableType.Position))
-mbs.AddSensor(SensorBody(bodyNumber=b1, localPosition=joint1_pos, fileName='solution/sensorPos1.txt',
+mbs.AddSensor(SensorBody(bodyNumber=b1, localPosition=joint1_pos, fileName='../solution/sensorPos1.txt',
                          outputVariableType=exu.OutputVariableType.Rotation))
-mbs.AddSensor(SensorBody(bodyNumber=b2, localPosition=joint2_pos, fileName='solution/sensorPos2.txt',
+mbs.AddSensor(SensorBody(bodyNumber=b2, localPosition=joint2_pos, fileName='../solution/sensorPos2.txt',
                          outputVariableType=exu.OutputVariableType.Rotation))
-mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, fileName='solution/sensorPos3.txt',
+mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, fileName='../solution/sensorPos3.txt',
                          outputVariableType=exu.OutputVariableType.Rotation))
 
 # Constraints
