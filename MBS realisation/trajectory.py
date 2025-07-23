@@ -5,6 +5,9 @@ import numpy as np
 from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, ProfilePTP
 from helpful.constants import *
 
+q0 = [0,0,0]
+q1 = [0.2,np.pi/4,np.pi/2]
+
 # Initialize SystemContainer and MainSystem
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
@@ -119,8 +122,6 @@ theta_constraints23 = mbs.AddObject(CoordinateConstraint(
 ))
 
 
-q0 = [0, 0, 0]  # Initial [d1, theta1, theta2]
-q1 = [0.1, -np.pi, -np.pi/2]  # Final [d1=0.1m, theta1=π/2, theta2=π/4]
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 
 Kp_prismatic = 10000  # Proportional gain (Н/м)
