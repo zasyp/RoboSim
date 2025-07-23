@@ -123,10 +123,10 @@ q0 = [0, 0, 0]  # Initial [d1, theta1, theta2]
 q1 = [0.1, np.pi, np.pi/2]  # Final [d1=0.1m, theta1=π/2, theta2=π/4]
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 
-Kp_prismatic = 10000  # Коэффициент пропорционального усиления (Н/м)
-Kd_prismatic = 1000   # Коэффициент дифференциального усиления (Н·с/м)
-Kp_revolute1 = 1000   # Коэффициент пропорционального момента (Н·м/рад)
-Kd_revolute1 = 100    # Коэффициент дифференциального момента (Н·м·с/рад)
+Kp_prismatic = 10000  # Proportional gain (Н/м)
+Kd_prismatic = 1000   # Differential gain (Н·с/м)
+Kp_revolute1 = 1000   # Proportional torque gain (Н·м/рад)
+Kd_revolute1 = 100    # Differential torque gain (Н·м·с/рад)
 Kp_revolute2 = 500
 Kd_revolute2 = 50
 
@@ -153,78 +153,74 @@ def SmoothStepDerivative(x, x0, x1, value0, value1):
     return loadValue
 
 def d_desired(t):
-    """Желаемое перемещение призматического сустава (0 → 0.1 м за 1 сек)"""
+    """Desired prismatic joint displacement"""
     return q1[0] * SmoothStep(t, 0, 1, 0, 1)
 
 def d_desired_vel(t):
-    """Желаемая скорость призматического сустава"""
+    """Desired prismatic joint velocity"""
     return q1[0] * SmoothStepDerivative(t, 0, 1, 0, 1)
 
 def theta1_desired(t):
-    """Желаемый угол для Revolute1 (0 → 180° за 1-2 сек)"""
+    """Desired Revolute1 angle"""
     return q1[1] * SmoothStep(t, 0, 1, 0, 1)
 
 def theta1_desired_vel(t):
-    """Желаемая угловая скорость для Revolute1"""
+    """Desired Revolute1 angular velocity"""
     return q1[1] * SmoothStepDerivative(t, 0, 1, 0, 1)
 
 def theta2_desired(t):
-    """Желаемый угол для Revolute2 (0 → 90° за 2-3 сек)"""
+    """Desired Revolute2 angle"""
     return (q1[2]) * SmoothStep(t, 0, 1, 0, 1)
 
 def theta2_desired_vel(t):
-    """Желаемая угловая скорость для Revolute2"""
+    """Desired Revolute2 angular velocity"""
     return (q1[2]) * SmoothStepDerivative(t, 0, 1, 0, 1)
 
 
 def ForceControlZ(mbs, t, loadVector):
-    """Управляющая сила для призматического сустава (ось Z)"""
-    # Текущее положение и скорость
+    """Prismatic joint force controller (ось Z)"""
     pos = mbs.GetNodeOutput(n0, exu.OutputVariableType.Position)
     vel = mbs.GetNodeOutput(n0, exu.OutputVariableType.Velocity)
 
-    d_initial = com_cil_global[2]  # Начальное положение по Z
-    d_curr = pos[2] - d_initial  # Текущее перемещение
-    d_vel = vel[2]  # Текущая скорость
+    d_initial = com_cil_global[2]  # Initial Z displacement
+    d_curr = pos[2] - d_initial  # Current displacement
+    d_vel = vel[2]  # Current velocity
 
-    # Желаемые значения
+    # Desired values
     d_des = d_desired(t)
     d_des_v = d_desired_vel(t)
 
-    # ПД-регулятор
+    # PD - controller
     F = Kp_prismatic * (d_des - d_curr) + Kd_prismatic * (d_des_v - d_vel)
-    return [0, 0, F]  # Сила по глобальной оси Z
+    return [0, 0, F]  # Z-Force
 
 
 def TorqueControlRevolute1(mbs, t, loadVector):
-    """Управляющий момент для Revolute1 (ось Z)"""
-    # Текущий угол и скорость
+    """Toraue controller Revolute1 (ось Z)"""
     rot = mbs.GetNodeOutput(n1, exu.OutputVariableType.Rotation)
-    theta_curr = rot[2] if isinstance(rot, (list, np.ndarray)) else 0  # Z-компонента
+    theta_curr = rot[2] if isinstance(rot, (list, np.ndarray)) else 0
     omega_curr = mbs.GetNodeOutput(n1, exu.OutputVariableType.AngularVelocity)[2]
-    # Желаемые значения
+
     theta_des = theta1_desired(t)
     theta_des_v = theta1_desired_vel(t)
 
     # ПД-регулятор
     T = Kp_revolute1 * (theta_des - theta_curr) + Kd_revolute1 * (theta_des_v - omega_curr)
-    return [0, 0, T]  # Момент по локальной оси Z
+    return [0, 0, T]
 
 def TorqueControlRevolute2(mbs, t, loadVector):
-    """Управляющий момент для Revolute2 (ось Z)"""
-    # Текущий угол и скорость
+    """Toraue controller Revolute2 (ось Z)"""
     rot = mbs.GetNodeOutput(n2, exu.OutputVariableType.Rotation)
-    theta_curr = rot[2] if isinstance(rot, (list, np.ndarray)) else 0  # Z-компонента
+    theta_curr = rot[2] if isinstance(rot, (list, np.ndarray)) else 0
     omega_curr = mbs.GetNodeOutput(n2, exu.OutputVariableType.AngularVelocity)[2]
-    # Желаемые значения
+
     theta_des = theta2_desired(t)
     theta_des_v = theta2_desired_vel(t)
 
-    # ПД-регулятор
     T = Kp_revolute2 * (theta_des - theta_curr) + Kd_revolute2 * (theta_des_v - omega_curr)
-    return [0, 0, T]  # Момент по локальной оси Z
+    return [0, 0, T]
 
-# 5. Создаем нагрузки
+
 loadForceZ = mbs.AddLoad(LoadForceVector(
     markerNumber=markerBody0_com,
     loadVector=[0, 0, 0],
