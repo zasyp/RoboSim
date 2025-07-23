@@ -120,7 +120,8 @@ theta_constraints23 = mbs.AddObject(CoordinateConstraint(
     markerNumbers=[link3_marker, link2_marker],
     factorValue1=0.5
 ))
-theta_constraints23 = mbs.AddObject(CoordinateConstraint(
+
+theta_constraints13 = mbs.AddObject(CoordinateConstraint(
     markerNumbers=[link3_marker, link1_marker],
     factorValue1=-1
 ))
