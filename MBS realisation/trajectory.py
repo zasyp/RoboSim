@@ -162,19 +162,19 @@ def d_desired_vel(t):
 
 def theta1_desired(t):
     """Желаемый угол для Revolute1 (0 → 180° за 1-2 сек)"""
-    return q1[1] * SmoothStep(t, 1, 2, 0, 1)
+    return q1[1] * SmoothStep(t, 0, 1, 0, 1)
 
 def theta1_desired_vel(t):
     """Желаемая угловая скорость для Revolute1"""
-    return q1[1] * SmoothStepDerivative(t, 1, 2, 0, 1)
+    return q1[1] * SmoothStepDerivative(t, 0, 1, 0, 1)
 
 def theta2_desired(t):
     """Желаемый угол для Revolute2 (0 → 90° за 2-3 сек)"""
-    return (q1[2]) * SmoothStep(t, 2, 3, 0, 1)
+    return (q1[2]) * SmoothStep(t, 0, 1, 0, 1)
 
 def theta2_desired_vel(t):
     """Желаемая угловая скорость для Revolute2"""
-    return (q1[2]) * SmoothStepDerivative(t, 2, 3, 0, 1)
+    return (q1[2]) * SmoothStepDerivative(t, 0, 1, 0, 1)
 
 
 def ForceControlZ(mbs, t, loadVector):
