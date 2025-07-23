@@ -9,8 +9,3 @@ import numpy as np
 from exudyn.kinematicTree import KinematicTree66, JointTransformMotionSubspace
 from exudyn.robotics.models import LinkDict2Robot
 from helpful.constants import *
-
-
-
-robot = Robot(gravity=g,
-              base=Link2DictRobot)

@@ -27,20 +27,20 @@ joint1_pos = np.array([0, 0, 300])
 joint2_pos = np.array([-l1, 0, com2_global[2]])
 joint3_pos = np.array([-(l1 + l2), 0, com3_global[2]])
 
-box_graphics = graphics.FromSTLfile('graphics/box.stl',
+box_graphics = graphics.FromSTLfile('../graphics/box.stl',
                                     color=graphics.color.blue,
                                     scale=0.001)
-graphicsBody1 = graphics.FromSTLfile('graphics/link1.stl',
+graphicsBody1 = graphics.FromSTLfile('../graphics/link1.stl',
                                      color=graphics.color.dodgerblue,
                                      scale=0.001)
-graphicsBody2 = graphics.FromSTLfile('graphics/link2.stl',
+graphicsBody2 = graphics.FromSTLfile('../graphics/link2.stl',
                                      color=graphics.color.red,
                                      scale=0.001)
-graphicsBody3 = graphics.FromSTLfile('graphics/link3.stl',
+graphicsBody3 = graphics.FromSTLfile('../graphics/link3.stl',
                                      color=graphics.color.dodgerblue,
                                      scale=0.001)
 
-graphicsBodyCilinder = graphics.FromSTLfile('graphics/cilinder.stl',
+graphicsBodyCilinder = graphics.FromSTLfile('../graphics/cilinder.stl',
                                             color=graphics.color.dodgerblue,
                                             scale=0.001)
 
