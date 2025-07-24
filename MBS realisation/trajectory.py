@@ -6,7 +6,7 @@ from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, Prof
 from helpful.constants import *
 
 q0 = [0,0,0]
-q1 = [0.2,-2*np.pi/3,-2*np.pi/3]
+q1 = [0.2,2*np.pi/3,2*np.pi/3]
 
 # Initialize SystemContainer and MainSystem
 SC = exu.SystemContainer()
@@ -80,7 +80,7 @@ jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_p
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
 tEnd = 3
-h = 1e-4
+h = 1e-2
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
@@ -119,14 +119,15 @@ omega3_sens = mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, 
 
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 
-Kp_prismatic = 1000  # Proportional gain (Н/м)
-Kd_prismatic = 100   # Differential gain (Н·с/м)
-Kp_revolute1 = 800   # Proportional torque gain (Н·м/рад)
-Kd_revolute1 = 600    # Differential torque gain (Н·м·с/рад)
-Kp_revolute2 = 800
-Kd_revolute2 = 600
-Kp_revolute3 = 50
-Kd_revolute3 = 10
+total_mass = m_cil + m1 + m2 + m3
+Kp_prismatic = 200   # Proportional gain
+Kd_prismatic = 380   # Differential gain
+Kp_revolute1 = 100
+Kd_revolute1 = 200
+Kp_revolute2 = 10
+Kd_revolute2 = 350
+Kp_revolute3 = 1
+Kd_revolute3 = 1
 
 markerBody0_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b0, localPosition=[0, 0, 0]))
 markerBody1_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b1, localPosition=[0, 0, 0]))
@@ -272,12 +273,12 @@ loadTorque2 = mbs.AddLoad(LoadTorqueVector(
     loadVectorUserFunction=TorqueControlRevolute2
 ))
 
-loadTorque3 = mbs.AddLoad(LoadTorqueVector(
-    markerNumber=markerBody3_com,
-    loadVector=[0, 0, 0],
-    bodyFixed=True,
-    loadVectorUserFunction=TorqueControlRevolute3
-))
+# loadTorque3 = mbs.AddLoad(LoadTorqueVector(
+#     markerNumber=markerBody3_com,
+#     loadVector=[0, 0, 0],
+#     bodyFixed=True,
+#     loadVectorUserFunction=TorqueControlRevolute3
+# ))
 
 # Assemble and simulate
 mbs.Assemble()
