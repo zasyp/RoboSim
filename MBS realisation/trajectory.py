@@ -6,7 +6,7 @@ from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, Prof
 from helpful.constants import *
 
 q0 = [0,0,0]
-q1 = [0.2,np.pi/3,-np.pi/3]
+q1 = [0.2,-2*np.pi/3,-3*np.pi/4]
 
 # Initialize SystemContainer and MainSystem
 SC = exu.SystemContainer()
