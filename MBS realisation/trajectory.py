@@ -2,11 +2,12 @@ import exudyn as exu
 from exudyn.utilities import *
 import exudyn.graphics as graphics
 import numpy as np
-from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, ProfilePTP
+from exudyn.robotics.motion import Trajectory, ProfilePTP
 from helpful.constants import *
 
-q0 = [0,0,0]
-q1 = [0.2,-2*np.pi/3,-2*np.pi/3]
+# Initial and final coordinates
+q0 = [0, 0, 0, 0]  # Including all four joints
+q1 = [0.2, -2*np.pi/3, -2*np.pi/3, -np.pi]
 
 # Initialize SystemContainer and MainSystem
 SC = exu.SystemContainer()
@@ -57,7 +58,7 @@ iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
     graphicsDataList=[graphicsBody3]
 )
 
-# Markers (used for constraints, not for setting node parameters)
+# Markers
 link0_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n0, coordinate=2))  # Z-position for prismatic joint
 link1_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n1, coordinate=6))  # Rotation Z for revolute joint 1
 link2_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n2, coordinate=6))  # Rotation Z for revolute joint 2
@@ -115,142 +116,117 @@ theta3_sens = mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, 
 omega3_sens = mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, fileName='../solution/sensorVel3.txt',
                          outputVariableType=exu.OutputVariableType.AngularVelocity))
 
+# Trajectory profiles
+traj_d = Trajectory(initialCoordinates=[0], initialTime=0)
+traj_d.Add(ProfilePTP([0.2], maxVelocities=[1.0], maxAccelerations=[2.0], syncAccTimes=False))
 
+traj_theta1 = Trajectory(initialCoordinates=[0], initialTime=0)
+traj_theta1.Add(ProfilePTP([-2*np.pi/3], maxVelocities=[10.0], maxAccelerations=[20.0], syncAccTimes=False))
 
-trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
+traj_theta2 = Trajectory(initialCoordinates=[q1[1]], initialTime=0)
+traj_theta2.Add(ProfilePTP([-2*np.pi/3], maxVelocities=[10.0], maxAccelerations=[20.0], syncAccTimes=False))
 
-Kp_prismatic = 1000  # Proportional gain (Н/м)
-Kd_prismatic = 100   # Differential gain (Н·с/м)
-Kp_revolute1 = 500   # Proportional torque gain (Н·м/рад)
-Kd_revolute1 = 100    # Differential torque gain (Н·м·с/рад)
-Kp_revolute2 = 150
-Kd_revolute2 = 1000
-Kp_revolute3 = 500
+traj_theta3 = Trajectory(initialCoordinates=[q1[1]+q1[2]], initialTime=0)
+traj_theta3.Add(ProfilePTP([-np.pi], maxVelocities=[10.0], maxAccelerations=[20.0], syncAccTimes=False))
+
+# PID coefficients
+Kp_prismatic = 1000
+Ki_prismatic = 1000
+Kd_prismatic = 700
+
+Kp_revolute1 = 500
+Ki_revolute1 = 50
+Kd_revolute1 = 415
+
+Kp_revolute2 = 500
+Ki_revolute2 = 50
+Kd_revolute2 = 100
+
+Kp_revolute3 = 400
+Ki_revolute3 = 50
 Kd_revolute3 = 100
 
+# Markers for loads
 markerBody0_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b0, localPosition=[0, 0, 0]))
 markerBody1_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b1, localPosition=[0, 0, 0]))
 markerBody2_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b2, localPosition=[0, 0, 0]))
 markerBody3_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b3, localPosition=[0, 0, 0]))
 
+# Global variables for integrals
+integral_d = 0
+integral_theta1 = 0
+integral_theta2 = 0
+integral_theta3 = 0
+t_prev = 0
 
-def SmoothStep(x, x0, x1, value0, value1):
-    if x <= x0:
-        return value0
-    elif x >= x1:
-        return value1
-    else:
-        t = (x - x0) / (x1 - x0)
-        return value0 + (value1 - value0) * (3*t**2 - 2*t**3)
-
-
-def SmoothStepDerivative(x, x0, x1, value0, value1):
-    loadValue = 0
-    if x > x0 and x < x1:
-        dx = x1-x0
-        loadValue = (value1-value0) * 0.45*(pi/dx*sin((x-x0)/dx*pi))
-
-    return loadValue
-
-
-def d_desired(t):
-    """Desired prismatic joint displacement"""
-    return q1[0] * SmoothStep(t, 0, 1, 0, 1)
-
-
-def d_desired_vel(t):
-    """Desired prismatic joint velocity"""
-    return q1[0] * SmoothStepDerivative(t, 0, 1, 0, 1)
-
-
-def theta1_desired(t):
-    """Desired Revolute1 angle"""
-    return q1[1] * SmoothStep(t, 0, 1, 0, 1)
-
-
-def theta1_desired_vel(t):
-    """Desired Revolute1 angular velocity"""
-    return q1[1] * SmoothStepDerivative(t, 0, 1, 0, 1)
-
-
-def theta2_desired(t):
-    """Desired Revolute2 angle"""
-    return (q1[2] + q1[1]) * SmoothStep(t, 0, 1, 0, 1)
-
-
-def theta2_desired_vel(t):
-    """Desired Revolute2 angular velocity"""
-    return (q1[2] + q1[1]) * SmoothStepDerivative(t, 0, 1, 0, 1)
-
-
-def theta3_desired(t):
-    """Desired Revolute2 angle"""
-    return (-q1[2]/2 + q1[2] + q1[1]) * SmoothStep(t, 0, 1, 0, 1)
-
-
-def theta3_desired_vel(t):
-    """Desired Revolute2 angular velocity"""
-    return (-q1[2]/2 + q1[2] + q1[1]) * SmoothStepDerivative(t, 0, 1, 0, 1)
-
-
+# Control functions
 def ForceControlZ(mbs, t, loadVector):
-    """Prismatic joint force controller (ось Z)"""
+    global integral_d, t_prev
+    positions, velocities, _ = traj_d.Evaluate(t)
+    d_des = positions[0]
+    d_des_v = velocities[0]
     pos = mbs.GetNodeOutput(n0, exu.OutputVariableType.Position)
     vel = mbs.GetNodeOutput(n0, exu.OutputVariableType.Velocity)
-
-    d_initial = com_cil_global[2]  # Initial Z displacement
-    d_curr = pos[2] - d_initial  # Current displacement
-    d_vel = vel[2]  # Current velocity
-
-    # Desired values
-    d_des = d_desired(t)
-    d_des_v = d_desired_vel(t)
-
-    # PD - controller
-    F = Kp_prismatic * (d_des - d_curr) + Kd_prismatic * (d_des_v - d_vel)
-    return [0, 0, F]  # Z-Force
-
+    d_initial = com_cil_global[2]
+    d_curr = pos[2] - d_initial
+    d_vel = vel[2]
+    error = d_des - d_curr
+    dt = t - t_prev
+    if dt > 0:
+        integral_d += error * dt
+    t_prev = t
+    F = Kp_prismatic * error + Ki_prismatic * integral_d + Kd_prismatic * (d_des_v - d_vel)
+    return [0, 0, F]
 
 def TorqueControlRevolute1(mbs, t, loadVector):
-    """Toraue controller Revolute1 (ось Z)"""
+    global integral_theta1, t_prev
+    positions, velocities, _ = traj_theta1.Evaluate(t)
+    theta_des = positions[0]
+    theta_des_v = velocities[0]
     rot = mbs.GetNodeOutput(n1, exu.OutputVariableType.Rotation)
-    theta_curr = rot[2] if isinstance(rot, (list, np.ndarray)) else 0
+    theta_curr = rot[2]
     omega_curr = mbs.GetNodeOutput(n1, exu.OutputVariableType.AngularVelocity)[2]
-
-    theta_des = theta1_desired(t)
-    theta_des_v = theta1_desired_vel(t)
-
-    T = Kp_revolute1 * (theta_des - theta_curr) + Kd_revolute1 * (theta_des_v - omega_curr)
+    error = theta_des - theta_curr
+    dt = t - t_prev
+    if dt > 0:
+        integral_theta1 += error * dt
+    t_prev = t
+    T = Kp_revolute1 * error + Ki_revolute1 * integral_theta1 + Kd_revolute1 * (theta_des_v - omega_curr)
     return [0, 0, T]
-
 
 def TorqueControlRevolute2(mbs, t, loadVector):
-    """Toraue controller Revolute2 (ось Z)"""
+    global integral_theta2, t_prev
+    positions, velocities, _ = traj_theta2.Evaluate(t)
+    theta_des = positions[0]
+    theta_des_v = velocities[0]
     rot = mbs.GetNodeOutput(n2, exu.OutputVariableType.Rotation)
-    theta_curr = rot[2] if isinstance(rot, (list, np.ndarray)) else 0
+    theta_curr = rot[2]
     omega_curr = mbs.GetNodeOutput(n2, exu.OutputVariableType.AngularVelocity)[2]
-
-    theta_des = theta2_desired(t)
-    theta_des_v = theta2_desired_vel(t)
-
-    T = Kp_revolute2 * (theta_des - theta_curr) + Kd_revolute2 * (theta_des_v - omega_curr)
+    error = theta_des - theta_curr
+    dt = t - t_prev
+    if dt > 0:
+        integral_theta2 += error * dt
+    t_prev = t
+    T = Kp_revolute2 * error + Ki_revolute2 * integral_theta2 + Kd_revolute2 * (theta_des_v - omega_curr)
     return [0, 0, T]
-
 
 def TorqueControlRevolute3(mbs, t, loadVector):
-    """Toraue controller Revolute1 (ось Z)"""
+    global integral_theta3, t_prev
+    positions, velocities, _ = traj_theta3.Evaluate(t)
+    theta_des = positions[0]
+    theta_des_v = velocities[0]
     rot = mbs.GetNodeOutput(n3, exu.OutputVariableType.Rotation)
-    theta_curr = rot[2] if isinstance(rot, (list, np.ndarray)) else 0
+    theta_curr = rot[2]
     omega_curr = mbs.GetNodeOutput(n3, exu.OutputVariableType.AngularVelocity)[2]
-
-    theta_des = theta3_desired(t)
-    theta_des_v = theta3_desired_vel(t)
-
-    T = Kp_revolute3 * (theta_des - theta_curr) + Kd_revolute3 * (theta_des_v - omega_curr)
+    error = theta_des - theta_curr
+    dt = t - t_prev
+    if dt > 0:
+        integral_theta3 += error * dt
+    t_prev = t
+    T = Kp_revolute3 * error + Ki_revolute3 * integral_theta3 + Kd_revolute3 * (theta_des_v - omega_curr)
     return [0, 0, T]
 
-
-
+# Add loads
 loadForceZ = mbs.AddLoad(LoadForceVector(
     markerNumber=markerBody0_com,
     loadVector=[0, 0, 0],
