@@ -6,7 +6,7 @@ from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, Prof
 from helpful.constants import *
 
 q0 = [0,0,0]
-q1 = [0.2,-np.pi/2,np.pi/2]
+q1 = [0.2,np.pi/3,-np.pi/3]
 
 # Initialize SystemContainer and MainSystem
 SC = exu.SystemContainer()
@@ -66,7 +66,7 @@ link3_marker = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=n3, coordinate=6)) 
 markerGround = mbs.AddMarker(MarkerBodyRigid(bodyNumber=oGround, localPosition=[0, 0, 0]))
 markerBody0J0 = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b0, localPosition=joint0_pos))
 
-# Joints (corrected prismatic axis from [0,0,0.3] to [0,0,1] for Z-direction)
+# Joints
 jointPrismatic = mbs.CreatePrismaticJoint(bodyNumbers=[oGround, b0], position=joint0_pos,
                                           useGlobalFrame=True, axis=[0, 0, 1],  # Z-axis
                                           axisRadius=0.2*w, axisLength=300/1000)
@@ -115,16 +115,6 @@ theta3_sens = mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, 
 omega3_sens = mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, fileName='../solution/sensorVel3.txt',
                          outputVariableType=exu.OutputVariableType.AngularVelocity))
 
-# Constraints
-theta_constraints23 = mbs.AddObject(CoordinateConstraint(
-    markerNumbers=[link3_marker, link2_marker],
-    factorValue1=0.5
-))
-
-theta_constraints13 = mbs.AddObject(CoordinateConstraint(
-    markerNumbers=[link3_marker, link1_marker],
-    factorValue1=-1
-))
 
 
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
@@ -135,13 +125,16 @@ Kp_revolute1 = 1000   # Proportional torque gain (Н·м/рад)
 Kd_revolute1 = 100    # Differential torque gain (Н·м·с/рад)
 Kp_revolute2 = 500
 Kd_revolute2 = 50
+Kp_revolute3 = 50
+Kd_revolute3 = 10
 
 markerBody0_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b0, localPosition=[0, 0, 0]))
 markerBody1_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b1, localPosition=[0, 0, 0]))
 markerBody2_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b2, localPosition=[0, 0, 0]))
+markerBody3_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b3, localPosition=[0, 0, 0]))
+
 
 def SmoothStep(x, x0, x1, value0, value1):
-
     if x <= x0:
         return value0
     elif x >= x1:
@@ -149,6 +142,7 @@ def SmoothStep(x, x0, x1, value0, value1):
     else:
         t = (x - x0) / (x1 - x0)
         return value0 + (value1 - value0) * (3*t**2 - 2*t**3)
+
 
 def SmoothStepDerivative(x, x0, x1, value0, value1):
     loadValue = 0
@@ -158,29 +152,45 @@ def SmoothStepDerivative(x, x0, x1, value0, value1):
 
     return loadValue
 
+
 def d_desired(t):
     """Desired prismatic joint displacement"""
     return q1[0] * SmoothStep(t, 0, 1, 0, 1)
+
 
 def d_desired_vel(t):
     """Desired prismatic joint velocity"""
     return q1[0] * SmoothStepDerivative(t, 0, 1, 0, 1)
 
+
 def theta1_desired(t):
     """Desired Revolute1 angle"""
     return q1[1] * SmoothStep(t, 0, 1, 0, 1)
+
 
 def theta1_desired_vel(t):
     """Desired Revolute1 angular velocity"""
     return q1[1] * SmoothStepDerivative(t, 0, 1, 0, 1)
 
+
 def theta2_desired(t):
     """Desired Revolute2 angle"""
-    return (q1[2]) * SmoothStep(t, 0, 1, 0, 1)
+    return (q1[2] + q1[1]) * SmoothStep(t, 0, 1, 0, 1)
+
 
 def theta2_desired_vel(t):
     """Desired Revolute2 angular velocity"""
-    return (q1[2]) * SmoothStepDerivative(t, 0, 1, 0, 1)
+    return (q1[2] + q1[1]) * SmoothStepDerivative(t, 0, 1, 0, 1)
+
+
+def theta3_desired(t):
+    """Desired Revolute2 angle"""
+    return (-q1[2]/2 + q1[2] + q1[1]) * SmoothStep(t, 0, 1, 0, 1)
+
+
+def theta3_desired_vel(t):
+    """Desired Revolute2 angular velocity"""
+    return (-q1[2]/2 + q1[2] + q1[1]) * SmoothStepDerivative(t, 0, 1, 0, 1)
 
 
 def ForceControlZ(mbs, t, loadVector):
@@ -210,9 +220,9 @@ def TorqueControlRevolute1(mbs, t, loadVector):
     theta_des = theta1_desired(t)
     theta_des_v = theta1_desired_vel(t)
 
-    # ПД-регулятор
     T = Kp_revolute1 * (theta_des - theta_curr) + Kd_revolute1 * (theta_des_v - omega_curr)
     return [0, 0, T]
+
 
 def TorqueControlRevolute2(mbs, t, loadVector):
     """Toraue controller Revolute2 (ось Z)"""
@@ -225,6 +235,20 @@ def TorqueControlRevolute2(mbs, t, loadVector):
 
     T = Kp_revolute2 * (theta_des - theta_curr) + Kd_revolute2 * (theta_des_v - omega_curr)
     return [0, 0, T]
+
+
+def TorqueControlRevolute3(mbs, t, loadVector):
+    """Toraue controller Revolute1 (ось Z)"""
+    rot = mbs.GetNodeOutput(n3, exu.OutputVariableType.Rotation)
+    theta_curr = rot[2] if isinstance(rot, (list, np.ndarray)) else 0
+    omega_curr = mbs.GetNodeOutput(n3, exu.OutputVariableType.AngularVelocity)[2]
+
+    theta_des = theta3_desired(t)
+    theta_des_v = theta3_desired_vel(t)
+
+    T = Kp_revolute3 * (theta_des - theta_curr) + Kd_revolute3 * (theta_des_v - omega_curr)
+    return [0, 0, T]
+
 
 
 loadForceZ = mbs.AddLoad(LoadForceVector(
@@ -246,6 +270,13 @@ loadTorque2 = mbs.AddLoad(LoadTorqueVector(
     loadVector=[0, 0, 0],
     bodyFixed=True,
     loadVectorUserFunction=TorqueControlRevolute2
+))
+
+loadTorque3 = mbs.AddLoad(LoadTorqueVector(
+    markerNumber=markerBody3_com,
+    loadVector=[0, 0, 0],
+    bodyFixed=True,
+    loadVectorUserFunction=TorqueControlRevolute3
 ))
 
 # Assemble and simulate
