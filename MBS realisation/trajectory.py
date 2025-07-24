@@ -121,12 +121,12 @@ trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 
 Kp_prismatic = 1000  # Proportional gain (Н/м)
 Kd_prismatic = 100   # Differential gain (Н·с/м)
-Kp_revolute1 = 800   # Proportional torque gain (Н·м/рад)
-Kd_revolute1 = 600    # Differential torque gain (Н·м·с/рад)
-Kp_revolute2 = 800
-Kd_revolute2 = 600
-Kp_revolute3 = 50
-Kd_revolute3 = 10
+Kp_revolute1 = 500   # Proportional torque gain (Н·м/рад)
+Kd_revolute1 = 100    # Differential torque gain (Н·м·с/рад)
+Kp_revolute2 = 150
+Kd_revolute2 = 1000
+Kp_revolute3 = 500
+Kd_revolute3 = 100
 
 markerBody0_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b0, localPosition=[0, 0, 0]))
 markerBody1_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b1, localPosition=[0, 0, 0]))
@@ -148,7 +148,7 @@ def SmoothStepDerivative(x, x0, x1, value0, value1):
     loadValue = 0
     if x > x0 and x < x1:
         dx = x1-x0
-        loadValue = (value1-value0) * 0.5*(pi/dx*sin((x-x0)/dx*pi))
+        loadValue = (value1-value0) * 0.45*(pi/dx*sin((x-x0)/dx*pi))
 
     return loadValue
 
