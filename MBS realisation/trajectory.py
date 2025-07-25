@@ -96,24 +96,32 @@ SC.visualizationSettings.nodes.drawNodesAsPoint = False
 SC.visualizationSettings.nodes.showBasis = True
 
 # Sensors
-zpos_sens = mbs.AddSensor(SensorBody(bodyNumber=b0, localPosition=joint0_pos, fileName='../solution/sensorPos0.txt',
+zpos_sens = mbs.AddSensor(SensorBody(storeInternal=True, bodyNumber=b0,
+                                     localPosition=joint0_pos, fileName='../solution/sensorPos0.txt',
                          outputVariableType=exu.OutputVariableType.Position))
-zvel_sens = mbs.AddSensor(SensorBody(bodyNumber=b0, localPosition=joint0_pos, fileName='../solution/sensorVelPos0.txt',
+zvel_sens = mbs.AddSensor(SensorBody(storeInternal=True, bodyNumber=b0,
+                                     localPosition=joint0_pos, fileName='../solution/sensorVelPos0.txt',
                          outputVariableType=exu.OutputVariableType.Velocity))
 
-theta1_sens = mbs.AddSensor(SensorBody(bodyNumber=b1, localPosition=joint1_pos, fileName='../solution/sensorPos1.txt',
+theta1_sens = mbs.AddSensor(SensorBody(storeInternal=True, bodyNumber=b1,
+                                       localPosition=joint1_pos, fileName='../solution/sensorPos1.txt',
                          outputVariableType=exu.OutputVariableType.Rotation))
-omega1_sens = mbs.AddSensor(SensorBody(bodyNumber=b1, localPosition=joint1_pos, fileName='../solution/sensorVel1.txt',
+omega1_sens = mbs.AddSensor(SensorBody(storeInternal=True, bodyNumber=b1,
+                                       localPosition=joint1_pos, fileName='../solution/sensorVel1.txt',
                          outputVariableType=exu.OutputVariableType.AngularVelocity))
 
-theta2_sens = mbs.AddSensor(SensorBody(bodyNumber=b2, localPosition=joint2_pos, fileName='../solution/sensorPos2.txt',
+theta2_sens = mbs.AddSensor(SensorBody(storeInternal=True, bodyNumber=b2,
+                                       localPosition=joint2_pos, fileName='../solution/sensorPos2.txt',
                          outputVariableType=exu.OutputVariableType.Rotation))
-omega2_sens = mbs.AddSensor(SensorBody(bodyNumber=b2, localPosition=joint2_pos, fileName='../solution/sensorVel2.txt',
+omega2_sens = mbs.AddSensor(SensorBody(storeInternal=True, bodyNumber=b2,
+                                       localPosition=joint2_pos, fileName='../solution/sensorVel2.txt',
                          outputVariableType=exu.OutputVariableType.AngularVelocity))
 
-theta3_sens = mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, fileName='../solution/sensorPos3.txt',
+theta3_sens = mbs.AddSensor(SensorBody(storeInternal=True, bodyNumber=b3,
+                                       localPosition=joint3_pos, fileName='../solution/sensorPos3.txt',
                          outputVariableType=exu.OutputVariableType.Rotation))
-omega3_sens = mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, fileName='../solution/sensorVel3.txt',
+omega3_sens = mbs.AddSensor(SensorBody(storeInternal=True, bodyNumber=b3,
+                                       localPosition=joint3_pos, fileName='../solution/sensorVel3.txt',
                          outputVariableType=exu.OutputVariableType.AngularVelocity))
 
 # Trajectory profiles
@@ -262,8 +270,68 @@ if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
 SC.renderer.DoIdleTasks()
 
+link1_grpah_data = mbs.GetSensorStoredData(theta1_sens)
+link2_grpah_data = mbs.GetSensorStoredData(theta2_sens)
+
 mbs.SolveDynamic(simulationSettings=simulationSettings, solverType=exu.DynamicSolverType.TrapezoidalIndex2)
 
 SC.WaitForRenderEngineStopFlag()
 exu.StopRenderer()
 mbs.SolutionViewer()
+
+# Prismatic graph (Z-axis)
+mbs.PlotSensor(sensorNumbers=[zpos_sens], components=[2],
+               title='Position of Prismatic Joint (Z)',
+               yLabel='Position [m]',
+               )
+
+mbs.PlotSensor(sensorNumbers=[zvel_sens], components=[2],
+               title='Velocity of Prismatic Joint (Z)',
+               yLabel='Velocity [m/s]',
+               figSize=(10, 4))
+
+# Revolute graphs
+for i, (pos_sens, vel_sens) in enumerate([(theta1_sens, omega1_sens),
+                                          (theta2_sens, omega2_sens),
+                                          (theta3_sens, omega3_sens)]):
+    mbs.PlotSensor(sensorNumbers=[pos_sens], components=[2],
+                   title=f'Rotation of Joint {i + 1} (Z)',
+                   yLabel=f'Theta_{i + 1} [rad]',
+                   figSize=(10, 4))
+
+    mbs.PlotSensor(sensorNumbers=[vel_sens], components=[2],
+                   title=f'Angular Velocity of Joint {i + 1} (Z)',
+                   yLabel=f'Omega_{i + 1} [rad/s]',
+                   figSize=(10, 4))
+
+import matplotlib.pyplot as plt
+
+fig, axs = plt.subplots(3, 2, figsize=(12, 10), tight_layout=True)
+
+sensors = {
+    'Prismatic Position': (zpos_sens, 2, 'Position [m]'),
+    'Prismatic Velocity': (zvel_sens, 2, 'Velocity [m/s]'),
+    'Joint1 Rotation': (theta1_sens, 2, 'Rotation [rad]'),
+    'Joint1 Velocity': (omega1_sens, 2, 'Angular Velocity [rad/s]'),
+    'Joint2 Rotation': (theta2_sens, 2, 'Rotation [rad]'),
+    'Joint2 Velocity': (omega2_sens, 2, 'Angular Velocity [rad/s]'),
+    'Joint3 Rotation': (theta3_sens, 2, 'Rotation [rad]'),
+    'Joint3 Velocity': (omega3_sens, 2, 'Angular Velocity [rad/s]')
+}
+
+for idx, (title, (sensor, comp, ylabel)) in enumerate(sensors.items()):
+    data = mbs.GetSensorStoredData(sensor)
+    time = data[:, 0]
+    values = data[:, 1 + comp]
+
+    row = idx // 2
+    col = idx % 2
+
+    axs[row, col].plot(time, values, 'b-', linewidth=1.5)
+    axs[row, col].set_title(title)
+    axs[row, col].set_xlabel('Time [s]')
+    axs[row, col].set_ylabel(ylabel)
+    axs[row, col].grid(True)
+
+plt.savefig('../solution/all_sensors.png', dpi=150)
+plt.show()
