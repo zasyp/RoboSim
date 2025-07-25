@@ -288,7 +288,7 @@ mbs.PlotSensor(sensorNumbers=[zpos_sens], components=[2],
 mbs.PlotSensor(sensorNumbers=[zvel_sens], components=[2],
                title='Velocity of Prismatic Joint (Z)',
                yLabel='Velocity [m/s]',
-               figSize=(10, 4))
+               )
 
 # Revolute graphs
 for i, (pos_sens, vel_sens) in enumerate([(theta1_sens, omega1_sens),
@@ -297,16 +297,16 @@ for i, (pos_sens, vel_sens) in enumerate([(theta1_sens, omega1_sens),
     mbs.PlotSensor(sensorNumbers=[pos_sens], components=[2],
                    title=f'Rotation of Joint {i + 1} (Z)',
                    yLabel=f'Theta_{i + 1} [rad]',
-                   figSize=(10, 4))
+                   )
 
     mbs.PlotSensor(sensorNumbers=[vel_sens], components=[2],
                    title=f'Angular Velocity of Joint {i + 1} (Z)',
                    yLabel=f'Omega_{i + 1} [rad/s]',
-                   figSize=(10, 4))
+                   )
 
 import matplotlib.pyplot as plt
 
-fig, axs = plt.subplots(3, 2, figsize=(12, 10), tight_layout=True)
+fig, axs = plt.subplots(3, 2, tight_layout=True)
 
 sensors = {
     'Prismatic Position': (zpos_sens, 2, 'Position [m]'),
