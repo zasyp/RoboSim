@@ -138,21 +138,21 @@ traj_theta3 = Trajectory(initialCoordinates=[q1[1]+q1[2]], initialTime=0)
 traj_theta3.Add(ProfilePTP([q1[1]+q1[2]/2], maxVelocities=[10.0], maxAccelerations=[10.0], syncAccTimes=False))
 
 # PID coefficients
-Kp_prismatic = 1000
-Ki_prismatic = 1000
-Kd_prismatic = 700
+Kp_prismatic = 300
+Ki_prismatic = 200
+Kd_prismatic = 450
 
-Kp_revolute1 = 0
-Ki_revolute1 = 50
-Kd_revolute1 = 415
+Kp_revolute1 = 300
+Ki_revolute1 = 100
+Kd_revolute1 = 100
 
-Kp_revolute2 = 400
-Ki_revolute2 = 50
-Kd_revolute2 = 100
+Kp_revolute2 = 15
+Ki_revolute2 = 30
+Kd_revolute2 = 30
 
-Kp_revolute3 = 400
-Ki_revolute3 = 50
-Kd_revolute3 = 100
+Kp_revolute3 = 300
+Ki_revolute3 = 0
+Kd_revolute3 = 300
 
 # Markers for loads
 markerBody0_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b0, localPosition=[0, 0, 0]))
@@ -215,7 +215,7 @@ def TorqueControlRevolute2(mbs, t, loadVector):
     if dt > 0:
         integral_theta1 += error * dt
     t_prev = t
-    T = Kp_revolute1 * error + Ki_revolute1 * integral_theta1 + Kd_revolute1 * (theta_des_v - omega_curr)
+    T = Kp_revolute2 * error + Ki_revolute2 * integral_theta1 + Kd_revolute2 * (theta_des_v - omega_curr)
     return [0, 0, T]
 
 def TorqueControlRevolute3(mbs, t, loadVector):
@@ -256,12 +256,12 @@ loadTorque2 = mbs.AddLoad(LoadTorqueVector(
     loadVectorUserFunction=TorqueControlRevolute2
 ))
 
-loadTorque3 = mbs.AddLoad(LoadTorqueVector(
-    markerNumber=markerBody3_com,
-    loadVector=[0, 0, 0],
-    bodyFixed=False,
-    loadVectorUserFunction=TorqueControlRevolute3
-))
+# loadTorque3 = mbs.AddLoad(LoadTorqueVector(
+#     markerNumber=markerBody3_com,
+#     loadVector=[0, 0, 0],
+#     bodyFixed=False,
+#     loadVectorUserFunction=TorqueControlRevolute3
+# ))
 
 # Assemble and simulate
 mbs.Assemble()
