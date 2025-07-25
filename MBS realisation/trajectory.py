@@ -78,6 +78,17 @@ jointRevolute2 = mbs.CreateRevoluteJoint(bodyNumbers=[b1, b2], position=joint2_p
 jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_pos,
                                          axis=[0, 0, 1], axisRadius=0.2*w, axisLength=0.3*w)
 
+# Damper
+damper_link1 = mbs.AddObject(CoordinateSpringDamper(markerNumbers = [link0_marker, link1_marker],
+                                     stiffness = spring,
+                                     damping = damper))
+damper_link2 = mbs.AddObject(CoordinateSpringDamper(markerNumbers = [link1_marker, link2_marker],
+                                     stiffness = spring_l1l2,
+                                     damping = damper))
+damper_link3 = mbs.AddObject(CoordinateSpringDamper(markerNumbers = [link2_marker, link3_marker],
+                                     stiffness = spring,
+                                     damping = damper))
+
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
 tEnd = 3
@@ -138,21 +149,21 @@ traj_theta3 = Trajectory(initialCoordinates=[q1[1]+q1[2]], initialTime=0)
 traj_theta3.Add(ProfilePTP([q1[1]+q1[2]/2], maxVelocities=[10.0], maxAccelerations=[10.0], syncAccTimes=False))
 
 # PID coefficients
-Kp_prismatic = 300
-Ki_prismatic = 200
-Kd_prismatic = 450
+Kp_prismatic = 200
+Ki_prismatic = 150
+Kd_prismatic = 375
 
 Kp_revolute1 = 300
 Ki_revolute1 = 100
 Kd_revolute1 = 100
 
-Kp_revolute2 = 15
-Ki_revolute2 = 30
-Kd_revolute2 = 30
+Kp_revolute2 = 33
+Ki_revolute2 = 101
+Kd_revolute2 = 22.5
 
-Kp_revolute3 = 300
-Ki_revolute3 = 0
-Kd_revolute3 = 300
+Kp_revolute3 = 0.025
+Ki_revolute3 = 1
+Kd_revolute3 = 1
 
 # Markers for loads
 markerBody0_com = mbs.AddMarker(MarkerBodyRigid(bodyNumber=b0, localPosition=[0, 0, 0]))

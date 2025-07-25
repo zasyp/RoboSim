@@ -67,3 +67,7 @@ inertiaTensorCilinder = np.array([
     [-3211.288581 / 1e9, 160272225.594173 / 1e9, -20361.408526 / 1e9],
     [-57566.712025 / 1e9, -20361.408526 / 1e9, 19416649.539239 / 1e9]
 ])
+
+spring = 30
+spring_l1l2 = 20 #stiffness of spring-damper in N/m
+damper = 8
