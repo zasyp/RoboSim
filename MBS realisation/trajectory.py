@@ -333,5 +333,5 @@ for idx, (title, (sensor, comp, ylabel)) in enumerate(sensors.items()):
     axs[row, col].set_ylabel(ylabel)
     axs[row, col].grid(True)
 
-plt.savefig('../solution/all_sensors.png', dpi=150)
+plt.savefig('/plots/all_sensors.png', dpi=100)
 plt.show()
