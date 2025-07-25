@@ -6,8 +6,8 @@ from exudyn.robotics.motion import Trajectory, ProfilePTP
 from helpful.constants import *
 
 # Initial and final coordinates
-q0 = [0, 0, 0, 0]  # Including all four joints
-q1 = [0.2, -2*np.pi/3, -2*np.pi/3, -np.pi]
+q0 = [0, 0, 0]  # Including all four joints
+q1 = [0.2, -2*np.pi/3, -2*np.pi/3]
 
 # Initialize SystemContainer and MainSystem
 SC = exu.SystemContainer()
@@ -118,27 +118,27 @@ omega3_sens = mbs.AddSensor(SensorBody(bodyNumber=b3, localPosition=joint3_pos, 
 
 # Trajectory profiles
 traj_d = Trajectory(initialCoordinates=[0], initialTime=0)
-traj_d.Add(ProfilePTP([0.2], maxVelocities=[1.0], maxAccelerations=[2.0], syncAccTimes=False))
+traj_d.Add(ProfilePTP([q1[0]], maxVelocities=[1.0], maxAccelerations=[2.0], syncAccTimes=False))
 
 traj_theta1 = Trajectory(initialCoordinates=[0], initialTime=0)
-traj_theta1.Add(ProfilePTP([-2*np.pi/3], maxVelocities=[10.0], maxAccelerations=[20.0], syncAccTimes=False))
+traj_theta1.Add(ProfilePTP([q1[1]], maxVelocities=[10.0], maxAccelerations=[10.0], syncAccTimes=False))
 
 traj_theta2 = Trajectory(initialCoordinates=[q1[1]], initialTime=0)
-traj_theta2.Add(ProfilePTP([-2*np.pi/3], maxVelocities=[10.0], maxAccelerations=[20.0], syncAccTimes=False))
+traj_theta2.Add(ProfilePTP([q1[1]+q1[2]], maxVelocities=[10.0], maxAccelerations=[10.0], syncAccTimes=False))
 
 traj_theta3 = Trajectory(initialCoordinates=[q1[1]+q1[2]], initialTime=0)
-traj_theta3.Add(ProfilePTP([-np.pi], maxVelocities=[10.0], maxAccelerations=[20.0], syncAccTimes=False))
+traj_theta3.Add(ProfilePTP([q1[1]+q1[2]/2], maxVelocities=[10.0], maxAccelerations=[10.0], syncAccTimes=False))
 
 # PID coefficients
 Kp_prismatic = 1000
 Ki_prismatic = 1000
 Kd_prismatic = 700
 
-Kp_revolute1 = 500
+Kp_revolute1 = 0
 Ki_revolute1 = 50
 Kd_revolute1 = 415
 
-Kp_revolute2 = 500
+Kp_revolute2 = 400
 Ki_revolute2 = 50
 Kd_revolute2 = 100
 
@@ -195,19 +195,19 @@ def TorqueControlRevolute1(mbs, t, loadVector):
     return [0, 0, T]
 
 def TorqueControlRevolute2(mbs, t, loadVector):
-    global integral_theta2, t_prev
-    positions, velocities, _ = traj_theta2.Evaluate(t)
+    global integral_theta1, t_prev
+    positions, velocities, _ = traj_theta1.Evaluate(t)
     theta_des = positions[0]
     theta_des_v = velocities[0]
-    rot = mbs.GetNodeOutput(n2, exu.OutputVariableType.Rotation)
+    rot = mbs.GetNodeOutput(n1, exu.OutputVariableType.Rotation)
     theta_curr = rot[2]
-    omega_curr = mbs.GetNodeOutput(n2, exu.OutputVariableType.AngularVelocity)[2]
+    omega_curr = mbs.GetNodeOutput(n1, exu.OutputVariableType.AngularVelocity)[2]
     error = theta_des - theta_curr
     dt = t - t_prev
     if dt > 0:
-        integral_theta2 += error * dt
+        integral_theta1 += error * dt
     t_prev = t
-    T = Kp_revolute2 * error + Ki_revolute2 * integral_theta2 + Kd_revolute2 * (theta_des_v - omega_curr)
+    T = Kp_revolute1 * error + Ki_revolute1 * integral_theta1 + Kd_revolute1 * (theta_des_v - omega_curr)
     return [0, 0, T]
 
 def TorqueControlRevolute3(mbs, t, loadVector):
@@ -237,21 +237,21 @@ loadForceZ = mbs.AddLoad(LoadForceVector(
 loadTorque1 = mbs.AddLoad(LoadTorqueVector(
     markerNumber=markerBody1_com,
     loadVector=[0, 0, 0],
-    bodyFixed=True,
+    bodyFixed=False,
     loadVectorUserFunction=TorqueControlRevolute1
 ))
 
 loadTorque2 = mbs.AddLoad(LoadTorqueVector(
     markerNumber=markerBody2_com,
     loadVector=[0, 0, 0],
-    bodyFixed=True,
+    bodyFixed=False,
     loadVectorUserFunction=TorqueControlRevolute2
 ))
 
 loadTorque3 = mbs.AddLoad(LoadTorqueVector(
     markerNumber=markerBody3_com,
     loadVector=[0, 0, 0],
-    bodyFixed=True,
+    bodyFixed=False,
     loadVectorUserFunction=TorqueControlRevolute3
 ))
 
