@@ -48,7 +48,8 @@ linkCylinder = RobotLink(
     inertia=inertiaTensorCilinder,
     jointType='Pz',
     parent=0,
-    visualization=visualisationCylinder
+    preHT=preHT_Cyl,
+    visualization=visualisationCylinder,
 )
 
 link1 = RobotLink(
@@ -57,6 +58,7 @@ link1 = RobotLink(
     inertia=inertiaTensor1,
     jointType='Rz',
     parent=1,
+    preHT=preHT_1,
     visualization=visualisationLink1
 )
 
@@ -66,6 +68,7 @@ link2 = RobotLink(
     inertia=inertiaTensor2,
     jointType='Rz',
     parent=2,
+    preHT=preHT_2,
     visualization=visualisationLink2
 )
 
@@ -75,8 +78,11 @@ link3 = RobotLink(
     inertia=inertiaTensor3,
     jointType='Rz',
     parent=3,
+    preHT=preHT_3,
     visualization=visualisationLink3
 )
+
+
 
 # Add links to robot
 robot.AddLink(linkBox)
