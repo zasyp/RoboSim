@@ -15,7 +15,7 @@ mbs = SC.AddSystem()
 
 # Add ground object
 oGround = mbs.AddObject(ObjectGround(referencePosition=[0,0,0],
-            visualization=VObjectGround(graphicsData=[graphics.Basis(0.5)])))
+            visualization=VObjectGround(graphicsData=[graphics.Basis(0.04)])))
 
 # Create base marker on ground
 baseMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=oGround, localPosition=[0,0,0]))
@@ -82,8 +82,6 @@ link3 = RobotLink(
     visualization=visualisationLink3
 )
 
-
-
 # Add links to robot
 robot.AddLink(linkBox)
 robot.AddLink(linkCylinder)
@@ -92,12 +90,15 @@ robot.AddLink(link2)
 robot.AddLink(link3)
 
 # Add robot to mbs using CreateRedundantCoordinateMBS
-robotDict = robot.CreateRedundantCoordinateMBS(mbs, baseMarker=baseMarker, createJointTorqueLoads=False)
+robotDict = robot.CreateRedundantCoordinateMBS(mbs=mbs,
+                                               baseMarker=baseMarker,
+                                               createJointTorqueLoads=False)
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
 tEnd = 3
 h = 1e-3  # Increased for stability
+
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
@@ -109,7 +110,7 @@ SC.visualizationSettings.window.renderWindowSize = [1600, 1200]
 SC.visualizationSettings.openGL.multiSampling = 4
 SC.visualizationSettings.general.autoFitScene = False
 SC.visualizationSettings.nodes.drawNodesAsPoint = False
-SC.visualizationSettings.nodes.showBasis = True
+SC.visualizationSettings.nodes.showBasis = False
 
 # Assemble and run simulation
 mbs.Assemble()
