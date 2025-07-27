@@ -13,6 +13,7 @@ m1 = 6.936
 m2 = 7.609
 m3 = 0.533
 m_cil = 9.838
+m_box = 177.584
 
 w = 0.1
 
@@ -27,7 +28,7 @@ joint1_pos = np.array([0, 0, 300])
 joint2_pos = np.array([-l1, 0, com2_global[2]])
 joint3_pos = np.array([-(l1 + l2), 0, com3_global[2]])
 
-box_graphics = graphics.FromSTLfile('../graphics/box.stl',
+graphicsBodyBox = graphics.FromSTLfile('../graphics/box.stl',
                                     color=graphics.color.blue,
                                     scale=0.001)
 graphicsBody1 = graphics.FromSTLfile('../graphics/link1.stl',
@@ -67,6 +68,13 @@ inertiaTensorCilinder = np.array([
     [-3211.288581 / 1e9, 160272225.594173 / 1e9, -20361.408526 / 1e9],
     [-57566.712025 / 1e9, -20361.408526 / 1e9, 19416649.539239 / 1e9]
 ])
+
+inertiaTensorBox = np.array([
+    [12827734685.081602 / 1e9, -141913220.479312 / 1e9, 56073179.720621 / 1e9],
+    [-141913220.479312 / 1e9, 15642337808.970053 / 1e9, 66762286.742506 / 1e9],
+    [56073179.720621 / 1e9, 66762286.742506 / 1e9, 9218564386.912329 / 1e9]
+])
+
 
 spring = 30
 spring_l1l2 = 20 #stiffness of spring-damper in N/m
