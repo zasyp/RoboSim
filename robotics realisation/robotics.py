@@ -1,12 +1,6 @@
-import exudyn as exu
-from exudyn.itemInterface import *
 from exudyn.utilities import *
-import exudyn.graphics as graphics
 from exudyn.rigidBodyUtilities import *
-from exudyn.graphicsDataUtilities import *
 from exudyn.robotics import *
-import numpy as np
-from exudyn.kinematicTree import KinematicTree66, JointTransformMotionSubspace
 from helpful.constants import *
 
 # Initialize SystemContainer and MainSystem
@@ -94,6 +88,12 @@ robotDict = robot.CreateRedundantCoordinateMBS(mbs=mbs,
                                                baseMarker=baseMarker,
                                                createJointTorqueLoads=False)
 
+print(robotDict)
+theta2 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=3, coordinate=6))
+theta3 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=4, coordinate=6))
+
+mbs.AddObject(CoordinateConstraint(markerNumbers=[theta2, theta3],
+                                   factorValue1=-0.5))
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
 tEnd = 3
