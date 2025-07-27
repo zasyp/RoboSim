@@ -14,8 +14,11 @@ SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 
 # Add ground object
-mbs.AddObject(ObjectGround(referencePosition=[0,0,0],
+oGround = mbs.AddObject(ObjectGround(referencePosition=[0,0,0],
             visualization=VObjectGround(graphicsData=[graphics.Basis(0.5)])))
+
+# Create base marker on ground
+baseMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=oGround, localPosition=[0,0,0]))
 
 # Initialize robot
 robot = Robot(
@@ -36,7 +39,7 @@ linkBox = RobotLink(
     COM=[0, 0, 0],
     inertia=inertiaTensorBox,
     parent=-1,
-    visualization=visualisationBox
+    visualization=visualisationBox,
 )
 
 linkCylinder = RobotLink(
@@ -50,7 +53,7 @@ linkCylinder = RobotLink(
 
 link1 = RobotLink(
     mass=m1,
-    COM=com1_global,
+    COM=joint1_pos,
     inertia=inertiaTensor1,
     jointType='Rz',
     parent=1,
@@ -59,7 +62,7 @@ link1 = RobotLink(
 
 link2 = RobotLink(
     mass=m2,
-    COM=com2_global,
+    COM=joint2_pos,
     inertia=inertiaTensor2,
     jointType='Rz',
     parent=2,
@@ -68,7 +71,7 @@ link2 = RobotLink(
 
 link3 = RobotLink(
     mass=m3,
-    COM=com3_global,
+    COM=joint3_pos,
     inertia=inertiaTensor3,
     jointType='Rz',
     parent=3,
@@ -82,14 +85,17 @@ robot.AddLink(link1)
 robot.AddLink(link2)
 robot.AddLink(link3)
 
+# Add robot to mbs using CreateRedundantCoordinateMBS
+robotDict = robot.CreateRedundantCoordinateMBS(mbs, baseMarker=baseMarker, createJointTorqueLoads=False)
+
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
 tEnd = 3
-h = 1e-4
+h = 1e-3  # Increased for stability
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
-simulationSettings.timeIntegration.simulateInRealtime = True
+simulationSettings.timeIntegration.simulateInRealtime = False  # Disabled for stability
 simulationSettings.solutionSettings.solutionWritePeriod = 0.005
 
 # Visualization settings

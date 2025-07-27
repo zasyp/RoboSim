@@ -20,8 +20,8 @@ w = 0.1
 # Положения звеньев
 com_cyl_global = np.array([0,0,-300/1000])
 com1_global = np.array([0,0,0])
-com2_global = np.array([-205/1000, 0, 81 / 1000])
-com3_global = np.array([-410 / 1000, 0 / 1000, 155 / 1000])
+com2_global = np.array([-205/1000, 0, 381 / 1000])
+com3_global = np.array([-410 / 1000, 0 / 1000, 455 / 1000])
 
 joint0_pos = np.array([0, 0, 0])
 joint1_pos = np.array([0, 0, 300])
