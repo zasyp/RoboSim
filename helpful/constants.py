@@ -12,13 +12,13 @@ l3 = 0.39
 m1 = 6.936
 m2 = 7.609
 m3 = 0.533
-m_cil = 9.838
+m_cyl = 9.838
 m_box = 177.584
 
 w = 0.1
 
 # Положения звеньев
-com_cil_global = np.array([0,0,-300/1000])
+com_cyl_global = np.array([0,0,-300/1000])
 com1_global = np.array([0,0,0])
 com2_global = np.array([-205/1000, 0, 81 / 1000])
 com3_global = np.array([-410 / 1000, 0 / 1000, 155 / 1000])
@@ -41,7 +41,7 @@ graphicsBody3 = graphics.FromSTLfile('../graphics/link3.stl',
                                      color=graphics.color.dodgerblue,
                                      scale=0.001)
 
-graphicsBodyCilinder = graphics.FromSTLfile('../graphics/cilinder.stl',
+graphicsBodyCylinder = graphics.FromSTLfile('../graphics/cylinder.stl',
                                             color=graphics.color.dodgerblue,
                                             scale=0.001)
 

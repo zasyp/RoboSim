@@ -28,7 +28,7 @@ iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
     position=com_cil_global,
     rotationMatrix=np.eye(3),
     gravity=g,
-    graphicsDataList=[graphicsBodyCilinder]
+    graphicsDataList=[graphicsBodyCylinder]
 )
 [n1, b1] = AddRigidBody(
     mainSys=mbs,

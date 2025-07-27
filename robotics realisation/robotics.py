@@ -7,21 +7,77 @@ from exudyn.graphicsDataUtilities import *
 from exudyn.robotics import *
 import numpy as np
 from exudyn.kinematicTree import KinematicTree66, JointTransformMotionSubspace
-from exudyn.robotics.models import LinkDict2Robot
 from helpful.constants import *
 
-link0_visualization = VRobotLink(
-    graphicsData=['graphicsBodyCilinder'],
-    linkColor = [0.4,0.4,0.4,1],
-    jointRadius=0.03,
-    jointWidth=0.3
+graphicsBaseList = [graphicsBodyBox, graphicsBodyCylinder, graphicsBody1, graphicsBody2, graphicsBody3]
+
+toolGraphics = [graphics.Basis(length=0.3*0)]
+
+robot = Robot(
+    gravity=g,
+    base=RobotBase()
 )
 
-link0 = RobotLink(
-    mass=m_cil,
+visualisationBox = VRobotLink(
+    graphicsData=['graphicsBodyBox']
+)
+
+visualisationCylinder = VRobotLink(
+    graphicsData=['graphicsBodyCylinder']
+)
+
+visualisationLink1 = VRobotLink(
+    graphicsData=['graphicsBody1']
+)
+
+visualisationLink2 = VRobotLink(
+    graphicsData=['graphicsBody2']
+)
+
+visualisationLink3 = VRobotLink(
+    graphicsData=['graphicsBody3']
+)
+
+linkBox = RobotLink(
+    mass=m_box,
+    COM=[0,0,0],
+    inertia=inertiaTensorBox,
+    parent=-1,
+    visualization=visualisationBox
+)
+
+linkCylinder = RobotLink(
+    mass=m_cyl,
+    COM=com_cyl_global,
     inertia=inertiaTensorCilinder,
+    jointType='Pz',
+    parent=linkBox,
+    visualization=visualisationCylinder,
+)
+
+link1 = RobotLink(
+    mass=m1,
+    COM=com1_global,
+    inertia=inertiaTensor1,
     jointType='Rz',
-    parent=-2,
-    visualization=link0_visualization,
-    PDcontrol=(1,1)
+    parent=linkCylinder,
+    visualization=visualisationLink1,
+)
+
+link2 = RobotLink(
+    mass=m2,
+    COM=com2_global,
+    inertia=inertiaTensor2,
+    jointType='Rz',
+    parent=link1,
+    visualization=visualisationLink2,
+)
+
+link3 = RobotLink(
+    mass=m3,
+    COM=com2_global,
+    inertia=inertiaTensor3,
+    jointType='Rz',
+    parent=link1,
+    visualization=visualisationLink3,
 )
