@@ -9,38 +9,31 @@ import numpy as np
 from exudyn.kinematicTree import KinematicTree66, JointTransformMotionSubspace
 from helpful.constants import *
 
-graphicsBaseList = [graphicsBodyBox, graphicsBodyCylinder, graphicsBody1, graphicsBody2, graphicsBody3]
+# Initialize SystemContainer and MainSystem
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
 
-toolGraphics = [graphics.Basis(length=0.3*0)]
+# Add ground object
+mbs.AddObject(ObjectGround(referencePosition=[0,0,0],
+            visualization=VObjectGround(graphicsData=[graphics.Basis(0.5)])))
 
+# Initialize robot
 robot = Robot(
     gravity=g,
     base=RobotBase()
 )
 
-visualisationBox = VRobotLink(
-    graphicsData=['graphicsBodyBox']
-)
+# Define link visualizations
+visualisationBox = VRobotLink(graphicsData=[graphicsBodyBox])
+visualisationCylinder = VRobotLink(graphicsData=[graphicsBodyCylinder])
+visualisationLink1 = VRobotLink(graphicsData=[graphicsBody1])
+visualisationLink2 = VRobotLink(graphicsData=[graphicsBody2])
+visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 
-visualisationCylinder = VRobotLink(
-    graphicsData=['graphicsBodyCylinder']
-)
-
-visualisationLink1 = VRobotLink(
-    graphicsData=['graphicsBody1']
-)
-
-visualisationLink2 = VRobotLink(
-    graphicsData=['graphicsBody2']
-)
-
-visualisationLink3 = VRobotLink(
-    graphicsData=['graphicsBody3']
-)
-
+# Define links
 linkBox = RobotLink(
     mass=m_box,
-    COM=[0,0,0],
+    COM=[0, 0, 0],
     inertia=inertiaTensorBox,
     parent=-1,
     visualization=visualisationBox
@@ -51,8 +44,8 @@ linkCylinder = RobotLink(
     COM=com_cyl_global,
     inertia=inertiaTensorCilinder,
     jointType='Pz',
-    parent=linkBox,
-    visualization=visualisationCylinder,
+    parent=0,
+    visualization=visualisationCylinder
 )
 
 link1 = RobotLink(
@@ -60,8 +53,8 @@ link1 = RobotLink(
     COM=com1_global,
     inertia=inertiaTensor1,
     jointType='Rz',
-    parent=linkCylinder,
-    visualization=visualisationLink1,
+    parent=1,
+    visualization=visualisationLink1
 )
 
 link2 = RobotLink(
@@ -69,15 +62,52 @@ link2 = RobotLink(
     COM=com2_global,
     inertia=inertiaTensor2,
     jointType='Rz',
-    parent=link1,
-    visualization=visualisationLink2,
+    parent=2,
+    visualization=visualisationLink2
 )
 
 link3 = RobotLink(
     mass=m3,
-    COM=com2_global,
+    COM=com3_global,
     inertia=inertiaTensor3,
     jointType='Rz',
-    parent=link1,
-    visualization=visualisationLink3,
+    parent=3,
+    visualization=visualisationLink3
 )
+
+# Add links to robot
+robot.AddLink(linkBox)
+robot.AddLink(linkCylinder)
+robot.AddLink(link1)
+robot.AddLink(link2)
+robot.AddLink(link3)
+
+# Simulation settings
+simulationSettings = exu.SimulationSettings()
+tEnd = 3
+h = 1e-4
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
+simulationSettings.timeIntegration.endTime = tEnd
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.timeIntegration.simulateInRealtime = True
+simulationSettings.solutionSettings.solutionWritePeriod = 0.005
+
+# Visualization settings
+SC.visualizationSettings.window.renderWindowSize = [1600, 1200]
+SC.visualizationSettings.openGL.multiSampling = 4
+SC.visualizationSettings.general.autoFitScene = False
+SC.visualizationSettings.nodes.drawNodesAsPoint = False
+SC.visualizationSettings.nodes.showBasis = True
+
+# Assemble and run simulation
+mbs.Assemble()
+SC.renderer.Start()
+if 'renderState' in exu.sys:
+    SC.SetRenderState(exu.sys['renderState'])
+SC.renderer.DoIdleTasks()
+
+mbs.SolveDynamic(simulationSettings=simulationSettings, solverType=exu.DynamicSolverType.TrapezoidalIndex2)
+
+SC.WaitForRenderEngineStopFlag()
+exu.StopRenderer()
+mbs.SolutionViewer()

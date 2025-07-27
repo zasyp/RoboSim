@@ -14,18 +14,18 @@ SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 
 # Ground and bodies
-oGround = mbs.CreateGround(referencePosition=[0, -145/1000, -805/1000], graphicsDataList=[box_graphics])
+oGround = mbs.CreateGround(referencePosition=[0, -145/1000, -805/1000], graphicsDataList=[graphicsBodyBox])
 
 i1 = RigidBodyInertia(mass=m1, inertiaTensor=inertiaTensor1)
 i2 = RigidBodyInertia(mass=m2, inertiaTensor=inertiaTensor2)
 i3 = RigidBodyInertia(mass=m3, inertiaTensor=inertiaTensor3)
-iCilinder = RigidBodyInertia(mass=m_cil, inertiaTensor=inertiaTensorCilinder)
+iCylinder = RigidBodyInertia(mass=m_cyl, inertiaTensor=inertiaTensorCilinder)
 
 [n0, b0] = AddRigidBody(
     mainSys=mbs,
-    inertia=iCilinder,
+    inertia=iCylinder,
     nodeType=str(exu.NodeType.RotationEulerParameters),
-    position=com_cil_global,
+    position=com_cyl_global,
     rotationMatrix=np.eye(3),
     gravity=g,
     graphicsDataList=[graphicsBodyCylinder]
@@ -186,7 +186,7 @@ def ForceControlZ(mbs, t, loadVector):
     d_des_v = velocities[0]
     pos = mbs.GetNodeOutput(n0, exu.OutputVariableType.Position)
     vel = mbs.GetNodeOutput(n0, exu.OutputVariableType.Velocity)
-    d_initial = com_cil_global[2]
+    d_initial = com_cyl_global[2]
     d_curr = pos[2] - d_initial
     d_vel = vel[2]
     error = d_des - d_curr

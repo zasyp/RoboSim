@@ -79,3 +79,4 @@ inertiaTensorBox = np.array([
 spring = 30
 spring_l1l2 = 20 #stiffness of spring-damper in N/m
 damper = 8
+
