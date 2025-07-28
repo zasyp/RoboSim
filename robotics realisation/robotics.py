@@ -118,12 +118,12 @@ mbs.SetPreStepUserFunction(PreStepIK)
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
-tEnd = 30
-h = 1e-3
+tEnd = 3
+h = 1e-4
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
-simulationSettings.timeIntegration.simulateInRealtime = False
+simulationSettings.timeIntegration.simulateInRealtime = True
 simulationSettings.solutionSettings.solutionWritePeriod = 0.005
 
 # Visualization settings
@@ -131,7 +131,7 @@ SC.visualizationSettings.window.renderWindowSize = [1600, 1200]
 SC.visualizationSettings.openGL.multiSampling = 4
 SC.visualizationSettings.general.autoFitScene = False
 SC.visualizationSettings.nodes.drawNodesAsPoint = False
-SC.visualizationSettings.nodes.showBasis = False
+SC.visualizationSettings.nodes.showBasis = True
 
 # Assemble system and start renderer
 mbs.Assemble()
