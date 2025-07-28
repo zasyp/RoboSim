@@ -76,7 +76,6 @@ link3 = RobotLink(
     preHT=preHT_3,
     visualization=visualisationLink3
 )
-
 # Add links to robot
 robot.AddLink(linkBox)
 robot.AddLink(linkCylinder)
@@ -93,24 +92,34 @@ kd_rot = 20     # Revolute joint derivative gain [Nm·s/rad]
 linkCylinder.SetPDcontrol(kp_trans, kd_trans)
 link1.SetPDcontrol(kp_rot, kd_rot)
 link2.SetPDcontrol(kp_rot, kd_rot)
+link3.SetPDcontrol(kp_rot, kd_rot)
+
+tool = RobotTool(
+    HT = HT_tool,
+)
+robot.tool = tool
 
 # Create kinematic tree in multibody system
 robotDict = robot.CreateKinematicTree(mbs=mbs)
 oKT = robotDict['objectKinematicTree']
 
-# Create trajectory from q0 to q1
-trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
-trajectory.Add(ProfilePTP(q1, syncAccTimes=False, maxVelocities=[1, 1, 1], maxAccelerations=[2, 2, 2]))
-trajectory.Initialize()
-
-# Pre-step function to update joint target positions and velocities before each simulation step
-def PreStepUF(mbs_, t):
-    u, v, a = trajectory.Evaluate(t)
-    mbs_.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
-    mbs_.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
+def PreStepIK(mbs_, t):
+    # пример целевой позы TCP (замените на вашу траекторию)
+    T_des = HTtranslate([0.2*np.sin(0.1*t), 0.2*np.cos(0.1*t), 0.1])
+    q_sol, success = ikSolver.SolveSafe(T_des)
+    if not success:
+        print(f"IK failed at t={t:.3f}")
+    mbs_.SetObjectParameter(oKT, 'jointPositionOffsetVector', q_sol)
     return True
 
-mbs.SetPreStepUserFunction(PreStepUF)
+ikSolver = InverseKinematicsNumerical(
+    robot = robot,
+    jointStiffness = 1e2,
+    useRenderer = False,
+    flagDebug = False
+)
+
+mbs.SetPreStepUserFunction(PreStepIK)
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
