@@ -89,6 +89,7 @@ kd_trans = 500  # Prismatic joint derivative gain [N·s/m]
 kp_rot = 500    # Revolute joint proportional gain [Nm/rad]
 kd_rot = 20     # Revolute joint derivative gain [Nm·s/rad]
 
+linkBox.SetPDcontrol(kp_trans, kd_trans)
 linkCylinder.SetPDcontrol(kp_trans, kd_trans)
 link1.SetPDcontrol(kp_rot, kd_rot)
 link2.SetPDcontrol(kp_rot, kd_rot)
