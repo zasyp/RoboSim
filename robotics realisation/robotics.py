@@ -6,8 +6,8 @@ from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, Prof
 from helpful.constants import *
 
 # Start and end coordinates
-q0 = np.array([0, 0, 0, 0])
-q1 = np.array([0.2, np.pi/2, np.pi/3, -np.pi/6])
+q0 = np.array([0, 0, 0])
+q1 = np.array([0.2, np.pi/2, np.pi/3])
 
 # Initialize SystemContainer and MainSystem
 SC = exu.SystemContainer()
