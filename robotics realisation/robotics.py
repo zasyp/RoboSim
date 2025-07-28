@@ -1,11 +1,19 @@
+import numpy as np
 from exudyn.utilities import *
 from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
+from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, ProfilePTP
 from helpful.constants import *
+
+# Start and end coordinates
+q0 = np.array([0, 0, 0, 0])
+q1 = np.array([0.2, np.pi/2, np.pi/3, -np.pi/6])
 
 # Initialize SystemContainer and MainSystem
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
+
+jointSpaceInterpolation = False
 
 # Add ground object
 oGround = mbs.AddObject(ObjectGround(referencePosition=[0,0,0],
@@ -35,7 +43,6 @@ linkBox = RobotLink(
     parent=-1,
     visualization=visualisationBox,
 )
-
 linkCylinder = RobotLink(
     mass=m_cyl,
     COM=com_cyl_global,
@@ -45,7 +52,6 @@ linkCylinder = RobotLink(
     preHT=preHT_Cyl,
     visualization=visualisationCylinder,
 )
-
 link1 = RobotLink(
     mass=m1,
     COM=joint1_pos,
@@ -55,7 +61,6 @@ link1 = RobotLink(
     preHT=preHT_1,
     visualization=visualisationLink1
 )
-
 link2 = RobotLink(
     mass=m2,
     COM=joint2_pos,
@@ -65,7 +70,6 @@ link2 = RobotLink(
     preHT=preHT_2,
     visualization=visualisationLink2
 )
-
 link3 = RobotLink(
     mass=m3,
     COM=joint3_pos,
@@ -83,26 +87,29 @@ robot.AddLink(link1)
 robot.AddLink(link2)
 robot.AddLink(link3)
 
-# Add robot to mbs using CreateRedundantCoordinateMBS
-robotDict = robot.CreateRedundantCoordinateMBS(mbs=mbs,
-                                               baseMarker=baseMarker,
-                                               createJointTorqueLoads=False)
+# CreateKinematicTree
+robotDict = robot.CreateKinematicTree(mbs=mbs)
+oKT = robotDict['objectKinematicTree']
 
-print(robotDict)
-theta2 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=3, coordinate=6))
-theta3 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=4, coordinate=6))
+trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
+trajectory.Add(ProfileConstantAcceleration(q1, 1))
 
-mbs.AddObject(CoordinateConstraint(markerNumbers=[theta2, theta3],
-                                   factorValue1=-0.5))
+def PreStepUF(mbs, t):
+    [u, v, a] = trajectory.Evaluate(t)
+    mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
+    mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
+    return True
+
+mbs.SetPreStepUserFunction(PreStepUF)
+
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
-tEnd = 3
-h = 1e-3  # Increased for stability
-
+tEnd = 30
+h = 1e-3
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
-simulationSettings.timeIntegration.simulateInRealtime = False  # Disabled for stability
+simulationSettings.timeIntegration.simulateInRealtime = False
 simulationSettings.solutionSettings.solutionWritePeriod = 0.005
 
 # Visualization settings
@@ -119,7 +126,9 @@ if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
 SC.renderer.DoIdleTasks()
 
-mbs.SolveDynamic(simulationSettings=simulationSettings, solverType=exu.DynamicSolverType.TrapezoidalIndex2)
+mbs.SolveDynamic(simulationSettings=simulationSettings,
+                 solverType=exu.DynamicSolverType.TrapezoidalIndex2,
+                 showHints=True)
 
 SC.WaitForRenderEngineStopFlag()
 exu.StopRenderer()
