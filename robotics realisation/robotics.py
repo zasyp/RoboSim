@@ -39,6 +39,7 @@ linkBox = RobotLink(
     inertia=inertiaTensorBox,
     parent=-1,
     visualization=visualisationBox,
+    PDcontrol=(kp_trans, kd_trans)
 )
 linkCylinder = RobotLink(
     mass=m_cyl,
@@ -48,6 +49,7 @@ linkCylinder = RobotLink(
     parent=0,
     preHT=preHT_Cyl,
     visualization=visualisationCylinder,
+    PDcontrol=(kp_trans, kd_trans)
 )
 link1 = RobotLink(
     mass=m1,
@@ -56,7 +58,8 @@ link1 = RobotLink(
     jointType='Rz',
     parent=1,
     preHT=preHT_1,
-    visualization=visualisationLink1
+    visualization=visualisationLink1,
+    PDcontrol=(kp_rot, kd_rot)
 )
 link2 = RobotLink(
     mass=m2,
@@ -65,7 +68,8 @@ link2 = RobotLink(
     jointType='Rz',
     parent=2,
     preHT=preHT_2,
-    visualization=visualisationLink2
+    visualization=visualisationLink2,
+    PDcontrol=(kp_rot, kd_rot)
 )
 link3 = RobotLink(
     mass=m3,
@@ -74,7 +78,8 @@ link3 = RobotLink(
     jointType='Rz',
     parent=3,
     preHT=preHT_3,
-    visualization=visualisationLink3
+    visualization=visualisationLink3,
+    PDcontrol=(kp_rot, kd_rot)
 )
 # Add links to robot
 robot.AddLink(linkBox)
@@ -83,17 +88,6 @@ robot.AddLink(link1)
 robot.AddLink(link2)
 robot.AddLink(link3)
 
-# Set PD control gains for joints that require control
-kp_trans = 1e6  # Prismatic joint proportional gain [N/m]
-kd_trans = 500  # Prismatic joint derivative gain [N·s/m]
-kp_rot = 500    # Revolute joint proportional gain [Nm/rad]
-kd_rot = 20     # Revolute joint derivative gain [Nm·s/rad]
-
-linkBox.SetPDcontrol(kp_trans, kd_trans)
-linkCylinder.SetPDcontrol(kp_trans, kd_trans)
-link1.SetPDcontrol(kp_rot, kd_rot)
-link2.SetPDcontrol(kp_rot, kd_rot)
-link3.SetPDcontrol(kp_rot, kd_rot)
 
 tool = RobotTool(
     HT = HT_tool,
