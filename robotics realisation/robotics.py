@@ -39,7 +39,7 @@ linkBox = RobotLink(
     inertia=inertiaTensorBox,
     parent=-1,
     visualization=visualisationBox,
-    PDcontrol=(kp_trans, kd_trans)
+    PDcontrol=(0, 0)
 )
 linkCylinder = RobotLink(
     mass=m_cyl,
@@ -79,7 +79,7 @@ link3 = RobotLink(
     parent=3,
     preHT=preHT_3,
     visualization=visualisationLink3,
-    PDcontrol=(kp_rot, kd_rot)
+    PDcontrol=(0, 0)
 )
 # Add links to robot
 robot.AddLink(linkBox)
@@ -99,7 +99,6 @@ robotDict = robot.CreateKinematicTree(mbs=mbs)
 oKT = robotDict['objectKinematicTree']
 
 def PreStepIK(mbs_, t):
-    # пример целевой позы TCP (замените на вашу траекторию)
     T_des = HTtranslate([0.2*np.sin(0.1*t), 0.2*np.cos(0.1*t), 0.1])
     q_sol, success = ikSolver.SolveSafe(T_des)
     if not success:
