@@ -111,7 +111,7 @@ if 1:
         [0, 0, 0, 1]
     ])
 
-    sol = myIK.Solve(T3, q0=q0)
+    sol = myIK.SolveSafe(T3, q0=q0)
     print('success = {}\nq = {} rad'.format(sol[1], np.round(sol[0], 3)))
 
 # Simulation settings

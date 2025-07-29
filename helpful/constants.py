@@ -95,3 +95,6 @@ kp_trans = 1e6  # Prismatic joint proportional gain [N/m]
 kd_trans = 500  # Prismatic joint derivative gain [N·s/m]
 kp_rot = 500    # Revolute joint proportional gain [Nm/rad]
 kd_rot = 20     # Revolute joint derivative gain [Nm·s/rad]
+spring = 0
+spring_l1l2 = spring
+damper = 10

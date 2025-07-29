@@ -79,15 +79,15 @@ jointRevolute3 = mbs.CreateRevoluteJoint(bodyNumbers=[b2, b3], position=joint3_p
                                          axis=[0, 0, 1], axisRadius=0.2*w, axisLength=0.3*w)
 
 # Damper
-damper_link1 = mbs.AddObject(CoordinateSpringDamper(markerNumbers = [link0_marker, link1_marker],
-                                     stiffness = spring,
-                                     damping = damper))
-damper_link2 = mbs.AddObject(CoordinateSpringDamper(markerNumbers = [link1_marker, link2_marker],
-                                     stiffness = spring_l1l2,
-                                     damping = damper))
-damper_link3 = mbs.AddObject(CoordinateSpringDamper(markerNumbers = [link2_marker, link3_marker],
-                                     stiffness = spring,
-                                     damping = damper))
+# damper_link1 = mbs.AddObject(CoordinateSpringDamper(markerNumbers = [link0_marker, link1_marker],
+#                                      stiffness = spring,
+#                                      damping = damper))
+# damper_link2 = mbs.AddObject(CoordinateSpringDamper(markerNumbers = [link1_marker, link2_marker],
+#                                      stiffness = spring_l1l2,
+#                                      damping = damper))
+# damper_link3 = mbs.AddObject(CoordinateSpringDamper(markerNumbers = [link2_marker, link3_marker],
+#                                      stiffness = spring,
+#                                      damping = damper))
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
@@ -182,7 +182,7 @@ t_prev = 0
 def ForceControlZ(mbs, t, loadVector):
     global integral_d, t_prev
     positions, velocities, _ = traj_d.Evaluate(t)
-    d_des = positions[0]
+    d_des = q1[0]
     d_des_v = velocities[0]
     pos = mbs.GetNodeOutput(n0, exu.OutputVariableType.Position)
     vel = mbs.GetNodeOutput(n0, exu.OutputVariableType.Velocity)
@@ -200,7 +200,7 @@ def ForceControlZ(mbs, t, loadVector):
 def TorqueControlRevolute1(mbs, t, loadVector):
     global integral_theta1, t_prev
     positions, velocities, _ = traj_theta1.Evaluate(t)
-    theta_des = positions[0]
+    theta_des = q1[1]
     theta_des_v = velocities[0]
     rot = mbs.GetNodeOutput(n1, exu.OutputVariableType.Rotation)
     theta_curr = rot[2]
@@ -216,7 +216,7 @@ def TorqueControlRevolute1(mbs, t, loadVector):
 def TorqueControlRevolute2(mbs, t, loadVector):
     global integral_theta1, t_prev
     positions, velocities, _ = traj_theta1.Evaluate(t)
-    theta_des = positions[0]
+    theta_des = q1[2]
     theta_des_v = velocities[0]
     rot = mbs.GetNodeOutput(n1, exu.OutputVariableType.Rotation)
     theta_curr = rot[2]
