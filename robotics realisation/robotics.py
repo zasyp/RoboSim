@@ -7,10 +7,6 @@ from exudyn.robotics.motion import Trajectory, ProfilePTP
 from helpful.constants import *
 from exudyn.itemInterface import LoadCoordinate
 
-# Start and end joint coordinates
-q0 = np.array([0, 0, 0])
-q1 = np.array([0.2, np.pi/2, np.pi/3])
-
 # Initialize system container and main system
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
@@ -98,22 +94,25 @@ robot.tool = tool
 robotDict = robot.CreateKinematicTree(mbs=mbs)
 oKT = robotDict['objectKinematicTree']
 
-def PreStepIK(mbs_, t):
-    T_des = HTtranslate([0.2*np.sin(0.1*t), 0.2*np.cos(0.1*t), 0.1])
-    q_sol, success = ikSolver.SolveSafe(T_des)
-    if not success:
-        print(f"IK failed at t={t:.3f}")
-    mbs_.SetObjectParameter(oKT, 'jointPositionOffsetVector', q_sol)
-    return True
+myIK = InverseKinematicsNumerical(robot, useRenderer=True)
 
-ikSolver = InverseKinematicsNumerical(
-    robot = robot,
-    jointStiffness = 1e2,
-    useRenderer = False,
-    flagDebug = False
-)
+if 1:
+    T3 = np.array([
+        [1, 0, 0, -0.205],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0.074],
+        [0, 0, 0, 1]
+    ])
 
-mbs.SetPreStepUserFunction(PreStepIK)
+    q0 = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ])
+
+    sol = myIK.Solve(T3, q0=q0)
+    print('success = {}\nq = {} rad'.format(sol[1], np.round(sol[0], 3)))
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
@@ -139,16 +138,11 @@ if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
 SC.renderer.DoIdleTasks()
 
-# Run dynamic simulation
-mbs.SolveDynamic(
-    simulationSettings=simulationSettings,
-    solverType=exu.DynamicSolverType.TrapezoidalIndex2,
-    showHints=True
-)
 
-# Wait for rendering to finish and cleanup
+# Run dynamic simulation
+mbs.SolveDynamic(simulationSettings=simulationSettings, solverType=exu.DynamicSolverType.TrapezoidalIndex2)
+
+
 SC.WaitForRenderEngineStopFlag()
 exu.StopRenderer()
-
-# Open solution viewer
 mbs.SolutionViewer()
