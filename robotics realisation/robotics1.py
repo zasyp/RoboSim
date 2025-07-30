@@ -76,17 +76,14 @@ robot.CreateKinematicTree(mbs=mbs)
 q0 = np.array([0, 0, 0, 0, 0])
 jointHTs = robot.JointHT(q0)
 
-T = np.array([
-    [1, 0, 0, 0],
-    [0, 1, 0, 0.1],
-    [0, 0, 1, 0],
-    [0, 0, 0, 1]
-])
+HTlastJoint = jointHTs[-1]
+HTmove = HT(RotationMatrixX(0.3*pi),[0.,0.,0.3])
+
 ik = InverseKinematicsNumerical(robot=robot, useRenderer=True,
                                 flagDebug=True,
                                 jointStiffness=1e1,
                                 )
-[q2, success] = ik.Solve(T, q0)
+[q2, success] = ik.Solve(HTlastJoint @ HTmove, q0)
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
