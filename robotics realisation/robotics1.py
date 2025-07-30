@@ -22,21 +22,21 @@ robot=Robot(gravity=g,
             base=roboBase,
             tool=RobotTool(HT=HT_tool))
 
-robot.AddLink(robotLink=RobotLink(
-    mass=m_box,
-    COM=[0, 0, 0],
-    inertia=inertiaTensorBox,
-    parent=-1,
-    visualization=visualisationBox,
-    PDcontrol=(0, 0)
-))
+# robot.AddLink(robotLink=RobotLink(
+#     mass=m_box,
+#     COM=[0, 0, 0],
+#     inertia=inertiaTensorBox,
+#     parent=-1,
+#     visualization=visualisationBox,
+#     PDcontrol=(0, 0)
+# ))
 
 robot.AddLink(robotLink=RobotLink(
     mass=m_cyl,
     COM=com_cyl_global,
     inertia=inertiaTensorCilinder,
     jointType='Pz',
-    parent=0,
+    parent=-1,
     preHT=preHT_Cyl,
     visualization=visualisationCylinder,
     PDcontrol=(kp_trans, kd_trans)
@@ -47,7 +47,7 @@ robot.AddLink(robotLink=RobotLink(
     COM=joint1_pos,
     inertia=inertiaTensor1,
     jointType='Rz',
-    parent=1,
+    parent=0,
     preHT=preHT_1,
     visualization=visualisationLink1,
     PDcontrol=(kp_rot, kd_rot)
@@ -57,7 +57,7 @@ robot.AddLink(robotLink=RobotLink(
     COM=joint2_pos,
     inertia=inertiaTensor2,
     jointType='Rz',
-    parent=2,
+    parent=1,
     preHT=preHT_2,
     visualization=visualisationLink2,
     PDcontrol=(kp_rot, kd_rot)
@@ -67,7 +67,7 @@ robot.AddLink(robotLink=RobotLink(
     COM=joint3_pos,
     inertia=inertiaTensor3,
     jointType='Rz',
-    parent=3,
+    parent=2,
     preHT=preHT_3,
     visualization=visualisationLink3,
     PDcontrol=(kp_rot, kd_rot)
@@ -81,7 +81,7 @@ SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 robot.CreateKinematicTree(mbs=mbs)
 
-q0 = np.array([0, 0, 0, 0, 0])
+q0 = np.array([0, 0, 0, 0])
 jointHTs = robot.JointHT(q0)
 
 T = np.array([
@@ -90,7 +90,7 @@ T = np.array([
     [0, 0, 1, 0.3],
     [0, 0, 0, 1]
 ])
-ik = InverseKinematicsNumerical(robot=robot, useRenderer=False,
+ik = InverseKinematicsNumerical(robot=robot, useRenderer=True,
                                 flagDebug=True,
                                 jointStiffness=1e1,
                                 )
