@@ -5,6 +5,7 @@ import exudyn.graphics as graphics
 from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
 import numpy as np
+from exudyn.robotics.motion import Trajectory, ProfilePTP, ProfileConstantAcceleration
 
 # Создаем систему
 SC = exu.SystemContainer()
@@ -70,16 +71,27 @@ mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', q0)
 
 # Вычисляем решение обратной кинематики
 try:
-    [q_final, success] = ik.SolveSafe(T_final, q0)
+    [q1, success] = ik.SolveSafe(T_final, q0)
     if not success:
         print("Решение обратной кинематики не найдено. Используется начальная позиция.")
-        q_final = q0  # используем начальное положение при ошибке
+        q1 = q0  # используем начальное положение при ошибке
     else:
-        print(f"Решение найдено: q_final = {q_final}")
+        print(f"Решение найдено: q_final = {q1}")
 except Exception as e:
     print(f"Ошибка обратной кинематики: {e}")
-    q_final = q0  # используем начальное положение при ошибке
+    q1 = q0  # используем начальное положение при ошибке
 
+trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
+trajectory.Add(ProfileConstantAcceleration(q1,1))
+
+def PreStepUF(mbs, t):
+    [u,v,a] = trajectory.Evaluate(t)
+    mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
+    mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
+    return True
+
+
+mbs.SetPreStepUserFunction(PreStepUF)
 # Сборка и запуск симуляции
 mbs.Assemble()
 SC.renderer.Start()
