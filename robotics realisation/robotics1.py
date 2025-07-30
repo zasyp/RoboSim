@@ -81,7 +81,7 @@ SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 robot.CreateKinematicTree(mbs=mbs)
 
-q0 = np.array([0, 0, 0])
+q0 = np.array([0, 0, 0, 0, 0])
 jointHTs = robot.JointHT(q0)
 
 T = np.array([
