@@ -10,9 +10,6 @@ from exudyn.robotics.models import ManipulatorPuma560, ManipulatorPANDA, Manipul
 from exudyn.lieGroupBasics import LogSE3, ExpSE3
 from helpful.constants import *
 
-#motion planning:
-jointSpaceInterpolation = False #false interpolates TCP position in work space/Cartesian coordinates
-
 visualisationBox = VRobotLink(graphicsData=[graphicsBodyBox])
 visualisationCylinder = VRobotLink(graphicsData=[graphicsBodyCylinder])
 visualisationLink1 = VRobotLink(graphicsData=[graphicsBody1])
@@ -76,8 +73,7 @@ robot.AddLink(robotLink=RobotLink(
     PDcontrol=(kp_rot, kd_rot)
 ))
 
-q0 = np.array([0, 0, 0, 0, 0])
-jointHTs = robot.JointHT(q0)
+
 
 
 
@@ -85,6 +81,8 @@ SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 robot.CreateKinematicTree(mbs=mbs)
 
+q0 = np.array([0, 0, 0, 0, 0])
+jointHTs = robot.JointHT(q0)
 
 T = np.array([
     [1, 0, 0, 0],
@@ -92,14 +90,12 @@ T = np.array([
     [0, 0, 1, 0.3],
     [0, 0, 0, 1]
 ])
-HTlastJoint = jointHTs[-1]@HT_tool
 ik = InverseKinematicsNumerical(robot=robot, useRenderer=False,
                                 flagDebug=True,
                                 jointStiffness=1e1,
                                 )
-[q2, success] = ik.SolveSafe(T, q0)
+[q2, success] = ik.Solve(T, q0)
 
-mbs.Assemble()
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
 tEnd = 3
