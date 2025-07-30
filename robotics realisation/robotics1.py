@@ -72,6 +72,7 @@ robot.AddLink(robotLink=RobotLink(
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 robotDict = robot.CreateKinematicTree(mbs=mbs)
+oKT = robotDict['objectKinematicTree']
 
 q0 = np.array([0, 0, 0, 0, 0])
 jointHTs = robot.JointHT(q0)
@@ -88,7 +89,6 @@ ik = InverseKinematicsNumerical(robot=robot, useRenderer=True,
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 trajectory.Add(ProfileConstantAcceleration(q1,1))
 
-oKT = robotDict['objectKinematicTree']
 def PreStepUF(mbs, t):
     [u,v,a] = trajectory.Evaluate(t)
     mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
@@ -97,6 +97,7 @@ def PreStepUF(mbs, t):
 
 
 mbs.SetPreStepUserFunction(PreStepUF)
+mbs.Assemble()
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
@@ -115,7 +116,6 @@ SC.visualizationSettings.general.autoFitScene = False
 SC.visualizationSettings.nodes.drawNodesAsPoint = False
 SC.visualizationSettings.nodes.showBasis = True
 
-mbs.Assemble()
 SC.renderer.Start()
 if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
