@@ -18,7 +18,7 @@ visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 
 robot=Robot(gravity=g,
             base=RobotBase(),
-            tool=RobotTool(HT=HT_tool))
+            tool=RobotTool(HT=HT0()))
 
 robot.AddLink(robotLink=RobotLink(
     mass=m_box,
@@ -77,15 +77,15 @@ oKT = robotDict['objectKinematicTree']
 q0 = np.array([0, 0, 0, 0, 0])
 jointHTs = robot.JointHT(q0)
 
-HTlastJoint = jointHTs[-1]
-HTmove = HT(RotationMatrixX(0.3*pi),[0.,0.,0.3])
+T_initial = robot.JointHT(q0)[-1] @ robot.tool.HT
+T_final = T_initial @ HTtranslate([0,0,0.2])
 
 ik = InverseKinematicsNumerical(robot=robot,
                                 useRenderer=True,
                                 flagDebug=True,
                                 jointStiffness=1e1,
                                 )
-[q1, success] = ik.Solve(HTlastJoint @ HTmove, q0)
+[q1, success] = ik.Solve(T_final, q0)
 
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 trajectory.Add(ProfileConstantAcceleration(q1,1))

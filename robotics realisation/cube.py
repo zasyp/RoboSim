@@ -89,8 +89,8 @@ def PreStepUF(mbs, t):
     mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
     return True
 
-
 mbs.SetPreStepUserFunction(PreStepUF)
+
 # Сборка и запуск симуляции
 mbs.Assemble()
 SC.renderer.Start()
