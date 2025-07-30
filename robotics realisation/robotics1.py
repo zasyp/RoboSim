@@ -73,23 +73,31 @@ robot.AddLink(robotLink=RobotLink(
     parent=3,
     preHT=preHT_3,
     visualization=visualisationLink3,
-    PDcontrol=(0, 0)
+    PDcontrol=(kp_rot, kd_rot)
 ))
 
-q0 = np.array([0, 0.1, 0.2, 0.3, 0.4])
+q0 = np.array([0, 0, 0, 0, 0])
 jointHTs = robot.JointHT(q0)
 
-HTmove = HT(RotationMatrixX(-0.3 * np.pi), [-0.3, 0.1, 0.5])  # goes through singularity
+
+
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+robot.CreateKinematicTree(mbs=mbs)
+
+
+T = np.array([
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 1, 0.3],
+    [0, 0, 0, 1]
+])
 HTlastJoint = jointHTs[-1]@HT_tool
 ik = InverseKinematicsNumerical(robot=robot, useRenderer=False,
                                 flagDebug=True,
                                 jointStiffness=1e1,
                                 )
-[q2, success] = ik.SolveSafe(HTlastJoint@HTmove@HTmove, q0)
-
-SC = exu.SystemContainer()
-mbs = SC.AddSystem()
-robot.CreateKinematicTree(mbs=mbs)
+[q2, success] = ik.SolveSafe(T, q0)
 
 mbs.Assemble()
 # Simulation settings
