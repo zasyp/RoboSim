@@ -27,7 +27,6 @@ robot.AddLink(robotLink=RobotLink(
     inertia=np.diag([0.1, 0.1, 0.1]),
     jointType='Pz',
     parent=-1,
-    preHT=HT0(),
     visualization=visualisationCube,
     PDcontrol=(10, 10),
 ))

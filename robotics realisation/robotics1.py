@@ -16,10 +16,8 @@ visualisationLink1 = VRobotLink(graphicsData=[graphicsBody1])
 visualisationLink2 = VRobotLink(graphicsData=[graphicsBody2])
 visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 
-
-roboBase = RobotBase()
 robot=Robot(gravity=g,
-            base=roboBase,
+            base=RobotBase(),
             tool=RobotTool(HT=HT_tool))
 
 robot.AddLink(robotLink=RobotLink(
