@@ -89,7 +89,12 @@ preHT_3 = np.array([
     [0, 0, 1, 0.074],
     [0, 0, 0, 1]
 ])
-HT_tool = preHT_Cyl @ preHT_1 @ preHT_2 @ preHT_3
+HT_tool = np.array([
+    [1, 0, 0, -0.39],
+    [0, 1, 0, 0],
+    [0, 0, 1, 0],
+    [0, 0, 0, 1]
+])
 # Set PD control gains for joints that require control
 kp_trans = 1e6  # Prismatic joint proportional gain [N/m]
 kd_trans = 500  # Prismatic joint derivative gain [N·s/m]

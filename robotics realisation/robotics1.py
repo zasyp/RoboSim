@@ -18,7 +18,7 @@ visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 
 robot=Robot(gravity=g,
             base=RobotBase(),
-            tool=RobotTool(HT=HT0()))
+            tool=RobotTool(HT=HT_tool))
 
 robot.AddLink(robotLink=RobotLink(
     mass=m_box,
@@ -85,7 +85,16 @@ ik = InverseKinematicsNumerical(robot=robot,
                                 flagDebug=True,
                                 jointStiffness=1e1,
                                 )
-[q1, success] = ik.Solve(T_final, q0)
+try:
+    [q1, success] = ik.Solve(T_final, q0)
+    if not success:
+        print("Решение обратной кинематики не найдено. Используется начальная позиция.")
+        q1 = q0  # используем начальное положение при ошибке
+    else:
+        print(f"Решение найдено: q_final = {q1}")
+except Exception as e:
+    print(f"Ошибка обратной кинематики: {e}")
+    q1 = q0  # используем начальное положение при ошибке
 
 trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 trajectory.Add(ProfileConstantAcceleration(q1,1))
