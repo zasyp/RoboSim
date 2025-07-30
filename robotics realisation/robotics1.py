@@ -80,7 +80,8 @@ jointHTs = robot.JointHT(q0)
 HTlastJoint = jointHTs[-1]
 HTmove = HT(RotationMatrixX(0.3*pi),[0.,0.,0.3])
 
-ik = InverseKinematicsNumerical(robot=robot, useRenderer=True,
+ik = InverseKinematicsNumerical(robot=robot,
+                                useRenderer=True,
                                 flagDebug=True,
                                 jointStiffness=1e1,
                                 )

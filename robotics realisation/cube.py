@@ -43,8 +43,9 @@ T_initial = robot.JointHT(q0)[-1] @ robot.tool.HT
 
 # Конечная поза (движение на 0.1 м вдоль Z)
 T_final = T_initial.copy()
-T_final[2, 3] = 0.3  # устанавливаем Z=0.1 м
-
+print(T_final)
+T_final[2][3] += 0.3  # устанавливаем Z=0.1 м
+print(T_final)
 
 
 
