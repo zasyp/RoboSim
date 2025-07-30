@@ -1,43 +1,41 @@
-import numpy as np
 import exudyn as exu
-from exudyn.utilities import *
+from exudyn.itemInterface import *
+from exudyn.utilities import * #includes itemInterface and rigidBodyUtilities
+import exudyn.graphics as graphics #only import if it does not conflict
 from exudyn.rigidBodyUtilities import *
+from exudyn.graphicsDataUtilities import *
 from exudyn.robotics import *
-from exudyn.robotics.motion import Trajectory, ProfilePTP
+from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, ProfilePTP
+from exudyn.robotics.models import ManipulatorPuma560, ManipulatorPANDA, ManipulatorUR5, LinkDict2Robot
+from exudyn.lieGroupBasics import LogSE3, ExpSE3
 from helpful.constants import *
-from exudyn.itemInterface import LoadCoordinate
 
-# Initialize system container and main system
-SC = exu.SystemContainer()
-mbs = SC.AddSystem()
+#motion planning:
+jointSpaceInterpolation = False #false interpolates TCP position in work space/Cartesian coordinates
+motionCase = 2 # case 1 and 2 move in different planes
 
-# Add ground object with visualization
-oGround = mbs.AddObject(ObjectGround(referencePosition=[0,0,0],
-            visualization=VObjectGround(graphicsData=[graphics.Basis(0.04)])))
-
-# Create base marker on ground
-baseMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=oGround, localPosition=[0,0,0]))
-
-# Initialize robot with gravity and base
-robot = Robot(gravity=g, base=RobotBase())
-
-# Define link visualizations
 visualisationBox = VRobotLink(graphicsData=[graphicsBodyBox])
 visualisationCylinder = VRobotLink(graphicsData=[graphicsBodyCylinder])
 visualisationLink1 = VRobotLink(graphicsData=[graphicsBody1])
 visualisationLink2 = VRobotLink(graphicsData=[graphicsBody2])
 visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 
-# Define robot links
-linkBox = RobotLink(
+
+roboBase = RobotBase()
+robot=Robot(gravity=g,
+            base=roboBase,
+            tool=RobotTool(HT=HT_tool))
+
+robot.AddLink(robotLink=RobotLink(
     mass=m_box,
     COM=[0, 0, 0],
     inertia=inertiaTensorBox,
     parent=-1,
     visualization=visualisationBox,
     PDcontrol=(0, 0)
-)
-linkCylinder = RobotLink(
+))
+
+robot.AddLink(robotLink=RobotLink(
     mass=m_cyl,
     COM=com_cyl_global,
     inertia=inertiaTensorCilinder,
@@ -46,8 +44,9 @@ linkCylinder = RobotLink(
     preHT=preHT_Cyl,
     visualization=visualisationCylinder,
     PDcontrol=(kp_trans, kd_trans)
-)
-link1 = RobotLink(
+))
+
+robot.AddLink(robotLink=RobotLink(
     mass=m1,
     COM=joint1_pos,
     inertia=inertiaTensor1,
@@ -56,8 +55,8 @@ link1 = RobotLink(
     preHT=preHT_1,
     visualization=visualisationLink1,
     PDcontrol=(kp_rot, kd_rot)
-)
-link2 = RobotLink(
+))
+robot.AddLink(robotLink=RobotLink(
     mass=m2,
     COM=joint2_pos,
     inertia=inertiaTensor2,
@@ -66,8 +65,8 @@ link2 = RobotLink(
     preHT=preHT_2,
     visualization=visualisationLink2,
     PDcontrol=(kp_rot, kd_rot)
-)
-link3 = RobotLink(
+))
+robot.AddLink(robotLink=RobotLink(
     mass=m3,
     COM=joint3_pos,
     inertia=inertiaTensor3,
@@ -76,48 +75,22 @@ link3 = RobotLink(
     preHT=preHT_3,
     visualization=visualisationLink3,
     PDcontrol=(0, 0)
-)
-# Add links to robot
-robot.AddLink(linkBox)
-robot.AddLink(linkCylinder)
-robot.AddLink(link1)
-robot.AddLink(link2)
-robot.AddLink(link3)
+))
 
+q0 = [0,0,0,0,0]
+jointHTs = robot.JointHT(q0)
 
-tool = RobotTool(
-    HT = HT_tool,
-)
-robot.tool = tool
+HTmove = HT(RotationMatrixX(-0.3 * pi), [-0.45, 0., 0.])  # goes through singularity
+HTlastJoint = jointHTs[-1]@HT_tool
+ik = InverseKinematicsNumerical(robot=robot, useRenderer=False,
+                                flagDebug=True,
+                                jointStiffness=1e4
+                                )
+[q2, success] = ik.SolveSafe(HTlastJoint@HTmove@HTmove, q0)
 
-# Create kinematic tree in multibody system
-robotDict = robot.CreateKinematicTree(mbs=mbs)
-oKT = robotDict['objectKinematicTree']
-
-myIK = InverseKinematicsNumerical(
-    robot=robot,
-    jointStiffness=10,
-    useRenderer=True
-)
-
-if 1:
-    T3 = np.array([
-        [1, 0, 0, -0.015],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0.004],
-        [0, 0, 0, 1]
-    ])
-
-    q0 = np.zeros(5)
-    try:
-        sol = myIK.SolveSafe(T=T3, q0=q0)
-        if sol[1]:
-            print('success = {}\nq = {} rad'.format(sol[1], np.round(sol[0], 3)))
-        else:
-            print('Кинематика не нашла решения.')
-    except TypeError as e:
-        print(f'Ошибка: {e}')
-        print('Проверьте параметры T3 или q0.')
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+robot.CreateKinematicTree(mbs=mbs)
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
@@ -136,7 +109,6 @@ SC.visualizationSettings.general.autoFitScene = False
 SC.visualizationSettings.nodes.drawNodesAsPoint = False
 SC.visualizationSettings.nodes.showBasis = True
 
-# Assemble system and start renderer
 mbs.Assemble()
 SC.renderer.Start()
 if 'renderState' in exu.sys:
