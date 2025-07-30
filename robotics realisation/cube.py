@@ -40,11 +40,9 @@ ik = InverseKinematicsNumerical(robot=robot, useRenderer=False, jointStiffness=1
 
 # Начальная поза
 T_initial = robot.JointHT(q0)[-1] @ robot.tool.HT
-
-# Конечная поза (движение на 0.1 м вдоль Z)
-T_final = T_initial.copy()
-print(T_final)
-T_final[2][3] += 0.3  # устанавливаем Z=0.1 м
+print(T_initial)
+# Конечная поза (движение на 0.2 м вдоль Z)
+T_final = T_initial @ HTtranslate([0,0,0.2])
 print(T_final)
 
 
@@ -72,7 +70,7 @@ mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', q0)
 
 # Вычисляем решение обратной кинематики
 try:
-    [q1, success] = ik.SolveSafe(T_final, q0)
+    [q1, success] = ik.Solve(T_final, q0)
     if not success:
         print("Решение обратной кинематики не найдено. Используется начальная позиция.")
         q1 = q0  # используем начальное положение при ошибке
