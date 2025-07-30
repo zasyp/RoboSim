@@ -28,7 +28,6 @@ robot.AddLink(robotLink=RobotLink(
     visualization=visualisationBox,
     PDcontrol=(0, 0)
 ))
-
 robot.AddLink(robotLink=RobotLink(
     mass=m_cyl,
     COM=com_cyl_global,
@@ -39,7 +38,6 @@ robot.AddLink(robotLink=RobotLink(
     visualization=visualisationCylinder,
     PDcontrol=(kp_trans, kd_trans)
 ))
-
 robot.AddLink(robotLink=RobotLink(
     mass=m1,
     COM=joint1_pos,
@@ -70,10 +68,6 @@ robot.AddLink(robotLink=RobotLink(
     visualization=visualisationLink3,
     PDcontrol=(kp_rot, kd_rot)
 ))
-
-
-
-
 
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
