@@ -71,7 +71,7 @@ robot.AddLink(robotLink=RobotLink(
 
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
-robot.CreateKinematicTree(mbs=mbs)
+robotDict = robot.CreateKinematicTree(mbs=mbs)
 
 q0 = np.array([0, 0, 0, 0, 0])
 jointHTs = robot.JointHT(q0)
@@ -83,7 +83,20 @@ ik = InverseKinematicsNumerical(robot=robot, useRenderer=True,
                                 flagDebug=True,
                                 jointStiffness=1e1,
                                 )
-[q2, success] = ik.Solve(HTlastJoint @ HTmove, q0)
+[q1, success] = ik.Solve(HTlastJoint @ HTmove, q0)
+
+trajectory = Trajectory(initialCoordinates=q0, initialTime=0)
+trajectory.Add(ProfileConstantAcceleration(q1,1))
+
+oKT = robotDict['objectKinematicTree']
+def PreStepUF(mbs, t):
+    [u,v,a] = trajectory.Evaluate(t)
+    mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
+    mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
+    return True
+
+
+mbs.SetPreStepUserFunction(PreStepUF)
 
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
