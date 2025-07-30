@@ -12,7 +12,6 @@ from helpful.constants import *
 
 #motion planning:
 jointSpaceInterpolation = False #false interpolates TCP position in work space/Cartesian coordinates
-motionCase = 2 # case 1 and 2 move in different planes
 
 visualisationBox = VRobotLink(graphicsData=[graphicsBodyBox])
 visualisationCylinder = VRobotLink(graphicsData=[graphicsBodyCylinder])
@@ -77,14 +76,14 @@ robot.AddLink(robotLink=RobotLink(
     PDcontrol=(0, 0)
 ))
 
-q0 = [0,0,0,0,0]
+q0 = np.array([0, 0.1, 0.2, 0.3, 0.4])
 jointHTs = robot.JointHT(q0)
 
-HTmove = HT(RotationMatrixX(-0.3 * pi), [-0.45, 0., 0.])  # goes through singularity
+HTmove = HT(RotationMatrixX(-0.3 * np.pi), [-0.3, 0.1, 0.5])  # goes through singularity
 HTlastJoint = jointHTs[-1]@HT_tool
 ik = InverseKinematicsNumerical(robot=robot, useRenderer=False,
                                 flagDebug=True,
-                                jointStiffness=1e4
+                                jointStiffness=1e1,
                                 )
 [q2, success] = ik.SolveSafe(HTlastJoint@HTmove@HTmove, q0)
 
@@ -92,6 +91,7 @@ SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 robot.CreateKinematicTree(mbs=mbs)
 
+mbs.Assemble()
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
 tEnd = 3
@@ -120,5 +120,5 @@ SC.renderer.DoIdleTasks()
 mbs.SolveDynamic(simulationSettings=simulationSettings, solverType=exu.DynamicSolverType.TrapezoidalIndex2)
 
 SC.renderer.DoIdleTasks()
-exu.StopRenderer()
+SC.renderer.Stop()
 mbs.SolutionViewer()
