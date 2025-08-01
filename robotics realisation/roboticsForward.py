@@ -17,6 +17,8 @@ visualisationLink2 = VRobotLink(graphicsData=[graphicsBody2])
 visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 
 useKT = True
+addConstraint = True
+
 
 robot=Robot(
     gravity=g,
@@ -87,6 +89,11 @@ robotDict = robot.CreateKinematicTree(
 
 oKT = robotDict['objectKinematicTree']
 q0 = np.array([0, 0, 0, 0, 0])
+
+if addConstraint:
+    mEndEffector = mbs.AddMarker(MarkerKinematicTreeRigid(objectNumber=oKT, linkNumber=nLinks - 1, localPosition=[0, 0, 0]))
+    mSecondLink = mbs.AddMarker(MarkerKinematicTreeRigid(objectNumber=oKT, linkNumber=nLinks - 2, localPosition=[0, 0, 0]))
+    mbs.AddObject(ObjectConnectorCoordinate(markerNumbers=[mEndEffector, mSecondLink], factorValue1 =-0.5))
 
 robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=0.25)
 def PreStepUF(mbs, t):

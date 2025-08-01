@@ -103,3 +103,4 @@ kd_rot = 20     # Revolute joint derivative gain [Nm·s/rad]
 spring = 0
 spring_l1l2 = spring
 damper = 10
+nLinks = 5
