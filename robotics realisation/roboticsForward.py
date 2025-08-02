@@ -106,10 +106,10 @@ def PreStepUF(mbs, t):
 
 mbs.SetPreStepUserFunction(PreStepUF)
 
-q1 = [0.1, -0.5 * pi, 0.3*pi, 0]
-q2 = [0.1, 1* pi, 0.15*pi, 0]
-q3 = [0.1, 0.5 * pi, 0.8*pi, 0]
-q4 = [0.1, -0.5 * pi, 0.3*pi, 0]
+q1 = [0.1, -0.5 * pi, pi, 0]
+q2 = [0.3, 1* pi, -0.15*pi, 0]
+q3 = [0.2, 0.5 * pi, 0.8*pi, 0]
+q4 = [0.15, -0.5 * pi, 0.3*pi, 0]
 q5 = [0, 0, 0, 0]
 
 robotTrajectory.Add(ProfileConstantAcceleration(q1,0.3))
@@ -129,10 +129,34 @@ verticalDispSens = mbs.AddSensor(
         linkNumber = 0,
         localPosition = [0,0,0],
         outputVariableType = exu.OutputVariableType.Displacement,
-        storeInternal = True,             # если нужен mbs.GetSensorStoredData()
-        writeToFile = True,               # включает составление файла
+        storeInternal = True,
+        writeToFile = True,
         fileName = os.path.join(output_dir, "verticalDisp.txt"),
         name = "verticalDisp"
+    )
+)
+verticalVelSens = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 0,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.VelocityLocal,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "verticalVel.txt"),
+        name = "verticalVel"
+    )
+)
+verticalAccSens = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 0,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.AccelerationLocal,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "verticalAcc.txt"),
+        name = "verticalAcc"
     )
 )
 theta1Sensor = mbs.AddSensor(
@@ -147,7 +171,30 @@ theta1Sensor = mbs.AddSensor(
         name = "theta1_deg"
     )
 )
-
+omega1Sensor = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 1,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.AngularVelocity,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "omega1_deg.txt"),
+        name = "omega1_deg"
+    )
+)
+epsilon1Sensor = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 1,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.AngularAccelerationLocal,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "epsilon1_deg.txt"),
+        name = "epsilon1_deg"
+    )
+)
 theta2Sensor = mbs.AddSensor(
     SensorKinematicTree(
         objectNumber = oKT,
@@ -160,6 +207,30 @@ theta2Sensor = mbs.AddSensor(
         name = "theta2_deg"
     )
 )
+omega2Sensor = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 2,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.AngularVelocity,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "omega2_deg.txt"),
+        name = "omega2_deg"
+    )
+)
+epsilon2Sensor = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 2,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.AngularAccelerationLocal,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "epsilon2_deg.txt"),
+        name = "epsilon2_deg"
+    )
+)
 theta3Sensor = mbs.AddSensor(
     SensorKinematicTree(
         objectNumber = oKT,
@@ -170,6 +241,30 @@ theta3Sensor = mbs.AddSensor(
         writeToFile = True,
         fileName = os.path.join(output_dir, "theta3_deg.txt"),
         name = "theta3_deg"
+    )
+)
+omega3Sensor = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 3,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.AngularVelocity,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "omega3_deg.txt"),
+        name = "omega3_deg"
+    )
+)
+epsilon3Sensor = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 3,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.AngularAccelerationLocal,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "epsilon3_deg.txt"),
+        name = "epsilon3_deg"
     )
 )
 
@@ -203,9 +298,9 @@ mbs.SolveDynamic(simulationSettings = simulationSettings,
                   solverType=exu.DynamicSolverType.TrapezoidalIndex2)
 
 mbs.PlotSensor(sensorNumbers=[0], components=2, xLabel='time (s)', yLabel='Z-axis displacement (m)')
-mbs.PlotSensor(sensorNumbers=[1], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 1 (deg)')
-mbs.PlotSensor(sensorNumbers=[2], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 2 (deg)')
-mbs.PlotSensor(sensorNumbers=[3], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 3 (deg)')
+mbs.PlotSensor(sensorNumbers=[3], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 1 (deg)')
+mbs.PlotSensor(sensorNumbers=[6], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 2 (deg)')
+mbs.PlotSensor(sensorNumbers=[9], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 3 (deg)')
 
 exu.StopRenderer() #safely close rendering window!
 
