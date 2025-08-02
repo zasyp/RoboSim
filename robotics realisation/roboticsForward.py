@@ -1,3 +1,4 @@
+import os
 import exudyn as exu
 from exudyn.itemInterface import *
 from exudyn.utilities import * #includes itemInterface and rigidBodyUtilities
@@ -92,6 +93,7 @@ mbs.AddObject(ObjectConnectorCoordinate(
     factorValue1=factorValue1,
 ))
 
+jointList = [0]*robot.NumberOfLinks()
 
 robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=0.25)
 def PreStepUF(mbs, t):
@@ -116,21 +118,64 @@ robotTrajectory.Add(ProfileConstantAcceleration(q3,0.3))
 robotTrajectory.Add(ProfileConstantAcceleration(q4,0.3))
 robotTrajectory.Add(ProfileConstantAcceleration(q5,0.3))
 
+output_dir = "sensor_outputs"
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
-for i in range(nLinks):
-    sensorName = f"Joint_{i}_Displacement"
-    if i < 2:
-        mbs.AddSensor(SensorKinematicTree(
-            objectNumber=oKT, linkNumber=i, localPosition=[0, 0, 0],
-            storeInternal=True, outputVariableType=exu.OutputVariableType.Position
-        ))
-    else:
-        mbs.AddSensor(SensorKinematicTree(
-            objectNumber=oKT, linkNumber=i, localPosition=[0, 0, 0],
-            storeInternal=True, outputVariableType=exu.OutputVariableType.Rotation
-        ))
+
+verticalDispSens = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 0,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.Displacement,
+        storeInternal = True,             # если нужен mbs.GetSensorStoredData()
+        writeToFile = True,               # включает составление файла
+        fileName = os.path.join(output_dir, "verticalDisp.txt"),
+        name = "verticalDisp"
+    )
+)
+theta1Sensor = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 1,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.Rotation,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "theta1_deg.txt"),
+        name = "theta1_deg"
+    )
+)
+
+theta2Sensor = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 2,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.Rotation,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "theta2_deg.txt"),
+        name = "theta2_deg"
+    )
+)
+theta3Sensor = mbs.AddSensor(
+    SensorKinematicTree(
+        objectNumber = oKT,
+        linkNumber = 3,
+        localPosition = [0,0,0],
+        outputVariableType = exu.OutputVariableType.Rotation,
+        storeInternal = True,
+        writeToFile = True,
+        fileName = os.path.join(output_dir, "theta3_deg.txt"),
+        name = "theta3_deg"
+    )
+)
+
 
 mbs.Assemble()
+
 simulationSettings = exu.SimulationSettings() #takes currently set values or default values
 tEnd = 6 #simulation time
 h = 0.25*1e-3 #step size
@@ -138,6 +183,7 @@ simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
 simulationSettings.solutionSettings.solutionWritePeriod = 0.005 #store every 5 ms
+simulationSettings.solutionSettings.sensorsWritePeriod  = 0.005
 SC.visualizationSettings.window.renderWindowSize=[1600,1200]
 SC.visualizationSettings.openGL.multiSampling = 4
 SC.visualizationSettings.general.autoFitScene = False
@@ -155,6 +201,15 @@ if 'renderState' in exu.sys: #reload old view
 mbs.WaitForUserToContinue() #stop before simulating
 mbs.SolveDynamic(simulationSettings = simulationSettings,
                   solverType=exu.DynamicSolverType.TrapezoidalIndex2)
+
+mbs.PlotSensor(sensorNumbers=[0], components=2, xLabel='time (s)', yLabel='Z-axis displacement (m)')
+mbs.PlotSensor(sensorNumbers=[1], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 1 (deg)')
+mbs.PlotSensor(sensorNumbers=[2], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 2 (deg)')
+mbs.PlotSensor(sensorNumbers=[3], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 3 (deg)')
+
 exu.StopRenderer() #safely close rendering window!
 
 mbs.SolutionViewer()
+
+
+
