@@ -1,4 +1,5 @@
 import os
+import matplotlib.pyplot as plt
 import exudyn as exu
 from exudyn.itemInterface import *
 from exudyn.utilities import * #includes itemInterface and rigidBodyUtilities
@@ -70,7 +71,7 @@ robot.AddLink(
     parent=-2,
     preHT=preHT_3,
     visualization=visualisationLink3,
-    PDcontrol=(kp_rot, kd_rot)
+    PDcontrol=(0, 0)
 ))
 
 SC = exu.SystemContainer()
@@ -85,7 +86,6 @@ nodeNumber = mbs.GetObject(oKT)['nodeNumber']
 mJoint2 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=0, coordinate=2))
 mJoint3 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=0, coordinate=3))
 
-boxJoint = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=0, coordinate=0))
 factorValue1 = -0.5
 
 mbs.AddObject(ObjectConnectorCoordinate(
@@ -95,14 +95,13 @@ mbs.AddObject(ObjectConnectorCoordinate(
 
 jointList = [0]*robot.NumberOfLinks()
 
-robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=0.25)
+robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 def PreStepUF(mbs, t):
     if useKT:
         [u,v,a] = robotTrajectory.Evaluate(t)
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
     return True
-
 
 mbs.SetPreStepUserFunction(PreStepUF)
 
@@ -112,11 +111,11 @@ q3 = [0.2, 0.5 * pi, 0.8*pi, 0]
 q4 = [0.15, -0.5 * pi, 0.3*pi, 0]
 q5 = [0, 0, 0, 0]
 
-robotTrajectory.Add(ProfileConstantAcceleration(q1,0.3))
-robotTrajectory.Add(ProfileConstantAcceleration(q2,0.3))
-robotTrajectory.Add(ProfileConstantAcceleration(q3,0.3))
-robotTrajectory.Add(ProfileConstantAcceleration(q4,0.3))
-robotTrajectory.Add(ProfileConstantAcceleration(q5,0.3))
+robotTrajectory.Add(ProfileConstantAcceleration(q1,2))
+# robotTrajectory.Add(ProfileConstantAcceleration(q2,0.3))
+# robotTrajectory.Add(ProfileConstantAcceleration(q3,0.3))
+# robotTrajectory.Add(ProfileConstantAcceleration(q4,0.3))
+# robotTrajectory.Add(ProfileConstantAcceleration(q5,0.3))
 
 output_dir = "sensor_outputs"
 if not os.path.exists(output_dir):
@@ -272,7 +271,7 @@ epsilon3Sensor = mbs.AddSensor(
 mbs.Assemble()
 
 simulationSettings = exu.SimulationSettings() #takes currently set values or default values
-tEnd = 6 #simulation time
+tEnd = 30 #simulation time
 h = 0.25*1e-3 #step size
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
@@ -297,10 +296,91 @@ mbs.WaitForUserToContinue() #stop before simulating
 mbs.SolveDynamic(simulationSettings = simulationSettings,
                   solverType=exu.DynamicSolverType.TrapezoidalIndex2)
 
-mbs.PlotSensor(sensorNumbers=[0], components=2, xLabel='time (s)', yLabel='Z-axis displacement (m)')
-mbs.PlotSensor(sensorNumbers=[3], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 1 (deg)')
-mbs.PlotSensor(sensorNumbers=[6], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 2 (deg)')
-mbs.PlotSensor(sensorNumbers=[9], components=2, factors=180/pi, xLabel='time (s)', yLabel='Theta 3 (deg)')
+# Data for building plots
+verticalDisp_data = mbs.GetSensorStoredData(verticalDispSens)
+theta1_data = mbs.GetSensorStoredData(theta1Sensor)
+theta2_data = mbs.GetSensorStoredData(theta2Sensor)
+theta3_data = mbs.GetSensorStoredData(theta3Sensor)
+
+verticalVel_data = mbs.GetSensorStoredData(verticalVelSens)
+omega1_data = mbs.GetSensorStoredData(omega1Sensor)
+omega2_data = mbs.GetSensorStoredData(omega2Sensor)
+omega3_data = mbs.GetSensorStoredData(omega3Sensor)
+
+verticalAcc_data = mbs.GetSensorStoredData(verticalAccSens)
+epsilon1_data = mbs.GetSensorStoredData(epsilon1Sensor)
+epsilon2_data = mbs.GetSensorStoredData(epsilon2Sensor)
+epsilon3_data = mbs.GetSensorStoredData(epsilon3Sensor)
+
+# Building plots
+plt.figure(figsize=(20, 20))
+
+plt.subplot(3, 4, 1)
+plt.plot(verticalDisp_data[:,0], 0.1 - verticalDisp_data[:,3])
+plt.title('Vertical Displacement')
+plt.grid()
+
+plt.subplot(3, 4, 2)
+plt.plot(theta1_data[:,0], theta1_data[:,3])
+plt.title('Theta1')
+plt.grid()
+
+plt.subplot(3, 4, 3)
+plt.plot(theta2_data[:,0], theta2_data[:,3])
+plt.title('Theta2')
+plt.grid()
+
+plt.subplot(3, 4, 4)
+plt.plot(theta3_data[:,0], theta3_data[:,3])
+plt.title('Theta3')
+plt.grid()
+
+# 2-я строка: скорости
+plt.subplot(3, 4, 5)
+plt.plot(verticalVel_data[:,0], verticalVel_data[:,3])
+plt.title('Vertical Velocity')
+plt.grid()
+
+plt.subplot(3, 4, 6)
+plt.plot(omega1_data[:,0], omega1_data[:,3])
+plt.title('Omega1')
+plt.grid()
+
+plt.subplot(3, 4, 7)
+plt.plot(omega2_data[:,0], omega2_data[:,3])
+plt.title('Omega2')
+plt.grid()
+
+plt.subplot(3, 4, 8)
+plt.plot(omega3_data[:,0], omega3_data[:,3])
+plt.title('Omega3')
+plt.grid()
+
+# 3-я строка: ускорения
+plt.subplot(3, 4, 9)
+plt.plot(verticalAcc_data[:,0], verticalAcc_data[:,3])
+plt.title('Vertical Acceleration')
+plt.grid()
+
+plt.subplot(3, 4, 10)
+plt.plot(epsilon1_data[:,0], epsilon1_data[:,3])
+plt.title('Epsilon1')
+plt.grid()
+
+plt.subplot(3, 4, 11)
+plt.plot(epsilon2_data[:,0], epsilon2_data[:,3])
+plt.title('Epsilon2')
+plt.grid()
+
+plt.subplot(3, 4, 12)
+plt.plot(epsilon3_data[:,0], epsilon3_data[:,3])
+plt.title('Epsilon3')
+plt.grid()
+
+# Настройка и сохранение
+plt.tight_layout(pad=2.0)
+plt.savefig('all_sensors_data.png')
+plt.close()
 
 exu.StopRenderer() #safely close rendering window!
 

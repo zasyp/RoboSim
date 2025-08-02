@@ -72,34 +72,34 @@ preHT_Cyl = np.array([
     [0, 0, 0, 1]
 ])
 preHT_1 = np.array([
+    [1, 0, 0, 0],
     [0, 1, 0, 0],
-    [-1, 0, 0, 0],
     [0, 0, 1, 0.3],
     [0, 0, 0, 1]
 ])
 preHT_2 = np.array([
-    [1, 0, 0, -0.205],
-    [0, 1, 0, 0],
+    [1, 0, 0, 0],
+    [0, 1, 0, 0.205],
     [0, 0, 1, 0.081],
     [0, 0, 0, 1]
 ])
 preHT_3 = np.array([
-    [1, 0, 0, -0.205],
-    [0, 1, 0, 0],
+    [1, 0, 0, 0],
+    [0, 1, 0, 0.205],
     [0, 0, 1, 0.074],
     [0, 0, 0, 1]
 ])
 HT_tool = np.array([
-    [1, 0, 0, -0.39],
-    [0, 1, 0, 0],
+    [1, 0, 0, 0],
+    [0, 1, 0, 0.39],
     [0, 0, 1, 0],
     [0, 0, 0, 1]
 ])
 # Set PD control gains for joints that require control
-kp_trans = 1e6  # Prismatic joint proportional gain [N/m]
-kd_trans = 500  # Prismatic joint derivative gain [N·s/m]
-kp_rot = 500    # Revolute joint proportional gain [Nm/rad]
-kd_rot = 600     # Revolute joint derivative gain [Nm·s/rad]
+kp_trans = 1e9  # Prismatic joint proportional gain [N/m]
+kd_trans = 1e9  # Prismatic joint derivative gain [N·s/m]
+kp_rot = 1e9    # Revolute joint proportional gain [Nm/rad]
+kd_rot = 1e9     # Revolute joint derivative gain [Nm·s/rad]
 spring = 0
 spring_l1l2 = spring
 damper = 10
