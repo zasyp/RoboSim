@@ -112,10 +112,10 @@ q4 = [0.15, -0.5 * pi, 0.3*pi, 0]
 q5 = [0, 0, 0, 0]
 
 robotTrajectory.Add(ProfileConstantAcceleration(q1,2))
-# robotTrajectory.Add(ProfileConstantAcceleration(q2,0.3))
-# robotTrajectory.Add(ProfileConstantAcceleration(q3,0.3))
-# robotTrajectory.Add(ProfileConstantAcceleration(q4,0.3))
-# robotTrajectory.Add(ProfileConstantAcceleration(q5,0.3))
+robotTrajectory.Add(ProfileConstantAcceleration(q2,2))
+robotTrajectory.Add(ProfileConstantAcceleration(q3,2))
+robotTrajectory.Add(ProfileConstantAcceleration(q4,2))
+robotTrajectory.Add(ProfileConstantAcceleration(q5,2))
 
 output_dir = "sensor_outputs"
 if not os.path.exists(output_dir):
@@ -380,6 +380,34 @@ plt.grid()
 # Настройка и сохранение
 plt.tight_layout(pad=2.0)
 plt.savefig('all_sensors_data.png')
+plt.close()
+
+# Data for error plots
+error_verticalDisp = np.abs(q1[0] - verticalDisp_data[:,3])
+error_theta1 = np.abs(q1[1] - theta1_data[:,3])
+error_theta2 = np.abs(q1[2] - theta2_data[:,3])
+
+# Building error plots
+plt.figure(figsize=(15, 10))
+
+plt.subplot(3, 4, 1)
+plt.semilogy(verticalDisp_data[:,0], error_verticalDisp)
+plt.title('Vertical Displacement Error (    log)')
+plt.grid(True, which="both", ls="-")
+plt.subplot(3, 4, 2)
+plt.semilogy(theta1_data[:,0], error_theta1)
+plt.title('Theta1 Error (log)')
+plt.grid(True, which="both", ls="-")
+
+plt.subplot(3, 4, 3)
+plt.semilogy(theta2_data[:,0], error_theta2)
+plt.title('Theta2 Error (log)')
+plt.grid(True, which="both", ls="-")
+
+
+
+plt.tight_layout(pad=2.0)
+plt.savefig('trajectory_errors_log.png', dpi=300)
 plt.close()
 
 exu.StopRenderer() #safely close rendering window!
