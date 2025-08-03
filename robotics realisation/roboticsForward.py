@@ -1,15 +1,9 @@
 import os
 import matplotlib.pyplot as plt
-import exudyn as exu
-from exudyn.itemInterface import *
-from exudyn.utilities import * #includes itemInterface and rigidBodyUtilities
-import exudyn.graphics as graphics #only import if it does not conflict
+from exudyn.utilities import *
 from exudyn.rigidBodyUtilities import *
-from exudyn.graphicsDataUtilities import *
 from exudyn.robotics import *
-from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration, ProfilePTP
-from exudyn.robotics.models import ManipulatorPuma560, ManipulatorPANDA, ManipulatorUR5, LinkDict2Robot
-from exudyn.lieGroupBasics import LogSE3, ExpSE3
+from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
 from helpful.constants import *
 
 visualisationBox = VRobotBase(graphicsData=[graphicsBodyBox])
@@ -281,7 +275,7 @@ simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
 simulationSettings.solutionSettings.solutionWritePeriod = 0.005 #store every 5 ms
 simulationSettings.solutionSettings.sensorsWritePeriod  = 0.005
-SC.visualizationSettings.window.renderWindowSize=[1600,1200]
+SC.visualizationSettings.window.renderWindowSize=(1600,1200)
 SC.visualizationSettings.openGL.multiSampling = 4
 SC.visualizationSettings.general.autoFitScene = False
 SC.visualizationSettings.nodes.drawNodesAsPoint=False
@@ -290,7 +284,7 @@ SC.visualizationSettings.general.drawWorldBasis=True
 SC.visualizationSettings.bodies.kinematicTree.showJointFrames = False
 SC.visualizationSettings.openGL.multiSampling=4
 SC.visualizationSettings.openGL.lineWidth = 2
-SC.visualizationSettings.openGL.light0position=[-6,2,12,0]
+SC.visualizationSettings.openGL.light0position=(-6,2,12,0)
 exu.StartRenderer()
 if 'renderState' in exu.sys: #reload old view
     SC.SetRenderState(exu.sys['renderState'])
