@@ -315,107 +315,162 @@ epsilon1_data = mbs.GetSensorStoredData(epsilon1Sensor)
 epsilon2_data = mbs.GetSensorStoredData(epsilon2Sensor)
 epsilon3_data = mbs.GetSensorStoredData(epsilon3Sensor)
 
-# Building plots
-plt.figure(figsize=(20, 20))
+# Get solution times and initialize ideal trajectory arrays
+times = theta1_data[:, 0]
+# Extract actual sensor data
+verticalDisp = verticalDisp_data[:, 3]  # z-component
+theta1 = theta1_data[:, 3]  # rotation z-component (in radians)
+theta2 = theta2_data[:, 3]  # rotation z-component (in radians)
+theta3 = theta3_data[:, 3]  # rotation z-component (in radians)
 
+verticalVel = verticalVel_data[:, 3]  # z-velocity
+omega1 = omega1_data[:, 3]  # angular velocity z-component (in rad/s)
+omega2 = omega2_data[:, 3]  # angular velocity z-component (in rad/s)
+omega3 = omega3_data[:, 3]  # angular velocity z-component (in rad/s)
+
+# Calculate ideal trajectory values
+n = len(times)
+ideal_positions = np.zeros((n, 4))  # [vertical, theta1, theta2, theta3]
+ideal_velocities = np.zeros((n, 4))
+
+for i, t in enumerate(times):
+    u, v, a = robotTrajectory.Evaluate(t)
+    ideal_positions[i] = u
+    ideal_velocities[i] = v
+
+# Calculate initial offset for vertical position
+z0 = verticalDisp_data[0, 3]  # initial z-position
+ideal_vertical_position = z0 + ideal_positions[:, 0]
+
+# ===========================
+# MAIN PLOT (3x4 grid)
+# ===========================
+plt.figure(figsize=(20, 15))
+
+# Position plots (row 1)
+# Vertical position
 plt.subplot(3, 4, 1)
-plt.plot(verticalDisp_data[:,0], 0.1 - verticalDisp_data[:,3])
-plt.title('Vertical Displacement')
+plt.plot(times, ideal_vertical_position, 'b-', label='Ideal')
+plt.plot(times, verticalDisp, 'r--', label='Actual')
+plt.title('Vertical Position (m)')
+plt.legend()
 plt.grid()
 
+# Theta1
 plt.subplot(3, 4, 2)
-plt.plot(theta1_data[:,0], theta1_data[:,3])
-plt.title('Theta1')
+plt.plot(times, ideal_positions[:, 1], 'b-', label='Ideal')
+plt.plot(times, theta1, 'r--', label='Actual')
+plt.title('Theta1 (rad)')
+plt.legend()
 plt.grid()
 
+# Theta2
 plt.subplot(3, 4, 3)
-plt.plot(theta2_data[:,0], theta2_data[:,3])
-plt.title('Theta2')
+plt.plot(times, ideal_positions[:, 2], 'b-', label='Ideal')
+plt.plot(times, theta2, 'r--', label='Actual')
+plt.title('Theta2 (rad)')
+plt.legend()
 plt.grid()
 
+# Theta3
 plt.subplot(3, 4, 4)
-plt.plot(theta3_data[:,0], theta3_data[:,3])
-plt.title('Theta3')
+plt.plot(times, ideal_positions[:, 3], 'b-', label='Ideal')
+plt.plot(times, theta3, 'r--', label='Actual')
+plt.title('Theta3 (rad)')
+plt.legend()
 plt.grid()
 
-# 2-я строка: скорости
+# Velocity plots (row 2)
+# Vertical velocity
 plt.subplot(3, 4, 5)
-plt.plot(verticalVel_data[:,0], verticalVel_data[:,3])
-plt.title('Vertical Velocity')
+plt.plot(times, ideal_velocities[:, 0], 'b-', label='Ideal')
+plt.plot(times, verticalVel, 'r--', label='Actual')
+plt.title('Vertical Velocity (m/s)')
+plt.legend()
 plt.grid()
 
+# Omega1
 plt.subplot(3, 4, 6)
-plt.plot(omega1_data[:,0], omega1_data[:,3])
-plt.title('Omega1')
+plt.plot(times, ideal_velocities[:, 1], 'b-', label='Ideal')
+plt.plot(times, omega1, 'r--', label='Actual')
+plt.title('Omega1 (rad/s)')
+plt.legend()
 plt.grid()
 
+# Omega2
 plt.subplot(3, 4, 7)
-plt.plot(omega2_data[:,0], omega2_data[:,3])
-plt.title('Omega2')
+plt.plot(times, ideal_velocities[:, 2], 'b-', label='Ideal')
+plt.plot(times, omega2, 'r--', label='Actual')
+plt.title('Omega2 (rad/s)')
+plt.legend()
 plt.grid()
 
+# Omega3
 plt.subplot(3, 4, 8)
-plt.plot(omega3_data[:,0], omega3_data[:,3])
-plt.title('Omega3')
+plt.plot(times, ideal_velocities[:, 3], 'b-', label='Ideal')
+plt.plot(times, omega3, 'r--', label='Actual')
+plt.title('Omega3 (rad/s)')
+plt.legend()
 plt.grid()
 
-# 3-я строка: ускорения
+# Acceleration plots (row 3) - unchanged
 plt.subplot(3, 4, 9)
-plt.plot(verticalAcc_data[:,0], verticalAcc_data[:,3])
-plt.title('Vertical Acceleration')
+plt.plot(verticalAcc_data[:, 0], verticalAcc_data[:, 3])
+plt.title('Vertical Acceleration (m/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 10)
-plt.plot(epsilon1_data[:,0], epsilon1_data[:,3])
-plt.title('Epsilon1')
+plt.plot(epsilon1_data[:, 0], epsilon1_data[:, 3])
+plt.title('Epsilon1 (rad/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 11)
-plt.plot(epsilon2_data[:,0], epsilon2_data[:,3])
-plt.title('Epsilon2')
+plt.plot(epsilon2_data[:, 0], epsilon2_data[:, 3])
+plt.title('Epsilon2 (rad/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 12)
-plt.plot(epsilon3_data[:,0], epsilon3_data[:,3])
-plt.title('Epsilon3')
+plt.plot(epsilon3_data[:, 0], epsilon3_data[:, 3])
+plt.title('Epsilon3 (rad/s²)')
 plt.grid()
 
-# Настройка и сохранение
 plt.tight_layout(pad=2.0)
-plt.savefig('all_sensors_data.png')
+plt.savefig('all_sensors_data_with_ideal.png')
 plt.close()
 
-# Data for error plots
-error_verticalDisp = np.abs(q1[0] - verticalDisp_data[:,3])
-error_theta1 = np.abs(q1[1] - theta1_data[:,3])
-error_theta2 = np.abs(q1[2] - theta2_data[:,3])
+# =================================
+# ERROR PLOTS (vertical, theta1, theta2)
+# =================================
+plt.figure(figsize=(12, 8))
 
-# Building error plots
-plt.figure(figsize=(15, 10))
+# Vertical position error
+error_vertical = ideal_vertical_position - verticalDisp
+plt.subplot(3, 1, 1)
+plt.plot(times, error_vertical)
+plt.title('Vertical Position Error')
+plt.ylabel('Error (m)')
+plt.grid()
 
-plt.subplot(3, 4, 1)
-plt.semilogy(verticalDisp_data[:,0], error_verticalDisp)
-plt.title('Vertical Displacement Error (    log)')
-plt.grid(True, which="both", ls="-")
-plt.subplot(3, 4, 2)
-plt.semilogy(theta1_data[:,0], error_theta1)
-plt.title('Theta1 Error (log)')
-plt.grid(True, which="both", ls="-")
+# Theta1 error (in radians)
+error_theta1 = ideal_positions[:, 1] - theta1
+plt.subplot(3, 1, 2)
+plt.plot(times, error_theta1)
+plt.title('Theta1 Error')
+plt.ylabel('Error (rad)')
+plt.grid()
 
-plt.subplot(3, 4, 3)
-plt.semilogy(theta2_data[:,0], error_theta2)
-plt.title('Theta2 Error (log)')
-plt.grid(True, which="both", ls="-")
+# Theta2 error (in radians)
+error_theta2 = ideal_positions[:, 2] - theta2
+plt.subplot(3, 1, 3)
+plt.plot(times, error_theta2)
+plt.title('Theta2 Error')
+plt.ylabel('Error (rad)')
+plt.xlabel('Time (s)')
+plt.grid()
 
-
-
-plt.tight_layout(pad=2.0)
-plt.savefig('trajectory_errors_log.png', dpi=300)
+plt.tight_layout()
+plt.savefig('position_errors.png')
 plt.close()
 
-exu.StopRenderer() #safely close rendering window!
-
+exu.StopRenderer()
 mbs.SolutionViewer()
-
-
-
