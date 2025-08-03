@@ -98,8 +98,8 @@ HT_tool = np.array([
 # Set PD control gains for joints that require control
 kp_trans = 1e9  # Prismatic joint proportional gain [N/m]
 kd_trans = 1e9  # Prismatic joint derivative gain [N·s/m]
-kp_rot = 1e9    # Revolute joint proportional gain [Nm/rad]
-kd_rot = 1e9     # Revolute joint derivative gain [Nm·s/rad]
+kp_rot = 1e10    # Revolute joint proportional gain [Nm/rad]
+kd_rot = 1e10     # Revolute joint derivative gain [Nm·s/rad]
 spring = 0
 spring_l1l2 = spring
 damper = 10

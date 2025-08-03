@@ -117,6 +117,7 @@ robotTrajectory.Add(ProfileConstantAcceleration(q3,2))
 robotTrajectory.Add(ProfileConstantAcceleration(q4,2))
 robotTrajectory.Add(ProfileConstantAcceleration(q5,2))
 
+
 output_dir = "sensor_outputs"
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -271,8 +272,10 @@ epsilon3Sensor = mbs.AddSensor(
 mbs.Assemble()
 
 simulationSettings = exu.SimulationSettings() #takes currently set values or default values
+
 tEnd = 30 #simulation time
 h = 0.25*1e-3 #step size
+
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
