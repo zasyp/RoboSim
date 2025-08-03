@@ -176,7 +176,7 @@ omega1Sensor = mbs.AddSensor(
         objectNumber = oKT,
         linkNumber = 1,
         localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.AngularVelocity,
+        outputVariableType = exu.OutputVariableType.AngularVelocityLocal,
         storeInternal = True,
         writeToFile = True,
         fileName = os.path.join(output_dir, "omega1_deg.txt"),
@@ -204,7 +204,7 @@ theta2Sensor = mbs.AddSensor(
         storeInternal = True,
         writeToFile = True,
         fileName = os.path.join(output_dir, "theta2_deg.txt"),
-        name = "theta2_deg"
+        name = "theta2_deg",
     )
 )
 omega2Sensor = mbs.AddSensor(
@@ -212,7 +212,7 @@ omega2Sensor = mbs.AddSensor(
         objectNumber = oKT,
         linkNumber = 2,
         localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.AngularVelocity,
+        outputVariableType = exu.OutputVariableType.AngularVelocityLocal,
         storeInternal = True,
         writeToFile = True,
         fileName = os.path.join(output_dir, "omega2_deg.txt"),
