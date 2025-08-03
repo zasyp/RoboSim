@@ -60,7 +60,7 @@ robot.AddLink(
     parent=-2,
     preHT=preHT_2,
     visualization=visualisationLink2,
-    PDcontrol=(kp_rot, kd_rot)
+    PDcontrol=(kp_rot2, kd_rot2)
 ))
 robot.AddLink(
     robotLink=RobotLink(
