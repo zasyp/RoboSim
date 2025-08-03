@@ -374,7 +374,6 @@ plt.grid()
 
 # Theta3
 plt.subplot(3, 4, 4)
-plt.plot(times, ideal_positions[:, 3], 'b-', label='Ideal')
 plt.plot(times, theta3, 'r--', label='Actual')
 plt.title('Theta3 (rad)')
 plt.legend()
@@ -407,7 +406,6 @@ plt.grid()
 
 # Omega3
 plt.subplot(3, 4, 8)
-plt.plot(times, ideal_velocities[:, 3], 'b-', label='Ideal')
 plt.plot(times, omega3, 'r--', label='Actual')
 plt.title('Omega3 (rad/s)')
 plt.legend()
