@@ -100,9 +100,9 @@ def PreStepUF(mbs, t):
 mbs.SetPreStepUserFunction(PreStepUF)
 
 q1 = [0.1, -0.5 * pi, pi, 0]
-q2 = [0.3, 1* pi, -0.15*pi, 0]
-q3 = [0.2, 0.5 * pi, 0.8*pi, 0]
-q4 = [0.15, -0.5 * pi, 0.3*pi, 0]
+q2 = [0.3, 0.2* pi, -0.15*pi, 0]
+q3 = [0.2, 0.5 * pi, 0.4*pi, 0]
+q4 = [0.15, -0.3 * pi, 0.3*pi, 0]
 q5 = [0, 0, 0, 0]
 
 robotTrajectory.Add(ProfileConstantAcceleration(q1,2))
@@ -262,6 +262,58 @@ epsilon3Sensor = mbs.AddSensor(
     )
 )
 
+# verticalForceSens = mbs.AddSensor(
+#     SensorKinematicTree(
+#         objectNumber = oKT,
+#         linkNumber = 0,
+#         localPosition = [0,0,0],
+#         outputVariableType = exu.OutputVariableType.ForceLocal,
+#         storeInternal = True,
+#         writeToFile = True,
+#         fileName = os.path.join(output_dir, "verticalForce.txt"),
+#         name = "verticalForce"
+#     )
+# )
+#
+# torqueSensor1 = mbs.AddSensor(
+#     SensorKinematicTree(
+#         objectNumber = oKT,
+#         linkNumber = 1,
+#         localPosition = [0,0,0],
+#         outputVariableType = exu.OutputVariableType.Torque,
+#         storeInternal = True,
+#         writeToFile = True,
+#         fileName = os.path.join(output_dir, "torque1_deg.txt"),
+#         name = "torque1_Nm"
+#     )
+# )
+#
+# torqueSensor1 = mbs.AddSensor(
+#     SensorKinematicTree(
+#         objectNumber = oKT,
+#         linkNumber = 2,
+#         localPosition = [0,0,0],
+#         outputVariableType = exu.OutputVariableType.Torque,
+#         storeInternal = True,
+#         writeToFile = True,
+#         fileName = os.path.join(output_dir, "torque2_Nm.txt"),
+#         name = "torque2_Nm"
+#     )
+# )
+#
+# torqueSensor1 = mbs.AddSensor(
+#     SensorKinematicTree(
+#         objectNumber = oKT,
+#         linkNumber = 3,
+#         localPosition = [0,0,0],
+#         outputVariableType = exu.OutputVariableType.Torque,
+#         storeInternal = True,
+#         writeToFile = True,
+#         fileName = os.path.join(output_dir, "torque2_Nm.txt"),
+#         name = "torque3_Nm"
+#     )
+# )
+
 
 mbs.Assemble()
 
@@ -344,31 +396,31 @@ plt.figure(figsize=(20, 15))
 # Position plots (row 1)
 # Vertical position
 plt.subplot(3, 4, 1)
-plt.plot(times, ideal_vertical_position, 'b-', label='Ideal')
-plt.plot(times, verticalDisp, 'r--', label='Actual')
+plt.plot(times, verticalDisp, 'b-', label='Actual')
+plt.plot(times, ideal_vertical_position, 'r--', label='Ideal')
 plt.title('Vertical Position (m)')
 plt.legend()
 plt.grid()
 
 # Theta1
 plt.subplot(3, 4, 2)
-plt.plot(times, ideal_positions[:, 1], 'b-', label='Ideal')
-plt.plot(times, theta1, 'r--', label='Actual')
+plt.plot(times, theta1, 'b-', label='Actual')
+plt.plot(times, ideal_positions[:, 1], 'r--', label='Ideal')
 plt.title('Theta1 (rad)')
 plt.legend()
 plt.grid()
 
 # Theta2
 plt.subplot(3, 4, 3)
-plt.plot(times, ideal_positions[:, 2], 'b-', label='Ideal')
-plt.plot(times, theta2, 'r--', label='Actual')
+plt.plot(times, theta2 - theta1, 'b-', label='Actual')
+plt.plot(times, ideal_positions[:, 2], 'r--', label='Ideal')
 plt.title('Theta2 (rad)')
 plt.legend()
 plt.grid()
 
 # Theta3
 plt.subplot(3, 4, 4)
-plt.plot(times, theta3, 'r--', label='Actual')
+plt.plot(times, theta3, 'b-', label='Actual')
 plt.title('Theta3 (rad)')
 plt.legend()
 plt.grid()
@@ -376,31 +428,31 @@ plt.grid()
 # Velocity plots (row 2)
 # Vertical velocity
 plt.subplot(3, 4, 5)
-plt.plot(times, ideal_velocities[:, 0], 'b-', label='Ideal')
-plt.plot(times, verticalVel, 'r--', label='Actual')
+plt.plot(times, verticalVel, 'b-', label='Actual')
+plt.plot(times, ideal_velocities[:, 0], 'r--', label='Ideal')
 plt.title('Vertical Velocity (m/s)')
 plt.legend()
 plt.grid()
 
 # Omega1
 plt.subplot(3, 4, 6)
-plt.plot(times, ideal_velocities[:, 1], 'b-', label='Ideal')
-plt.plot(times, omega1, 'r--', label='Actual')
+plt.plot(times, omega1, 'b-', label='Actual')
+plt.plot(times, ideal_velocities[:, 1], 'r--', label='Ideal')
 plt.title('Omega1 (rad/s)')
 plt.legend()
 plt.grid()
 
 # Omega2
 plt.subplot(3, 4, 7)
-plt.plot(times, ideal_velocities[:, 2], 'b-', label='Ideal')
-plt.plot(times, omega2, 'r--', label='Actual')
+plt.plot(times, omega2 - omega1, 'b-', label='Actual')
+plt.plot(times, ideal_velocities[:, 2], 'r--', label='Ideal')
 plt.title('Omega2 (rad/s)')
 plt.legend()
 plt.grid()
 
 # Omega3
 plt.subplot(3, 4, 8)
-plt.plot(times, omega3, 'r--', label='Actual')
+plt.plot(times, omega3, 'b-', label='Actual')
 plt.title('Omega3 (rad/s)')
 plt.legend()
 plt.grid()
@@ -452,7 +504,7 @@ plt.ylabel('Error (rad)')
 plt.grid()
 
 # Theta2 error (in radians)
-error_theta2 = ideal_positions[:, 2] - theta2
+error_theta2 = ideal_positions[:, 2] - theta2 + theta1
 plt.subplot(3, 1, 3)
 plt.plot(times, error_theta2)
 plt.title('Theta2 Error')
@@ -463,6 +515,10 @@ plt.grid()
 plt.tight_layout()
 plt.savefig('position_errors.png')
 plt.close()
+
+# =================================
+# FORCE AND TORQUE PLOTS (cylinder, link1, link2, link3)
+# =================================
 
 exu.StopRenderer()
 mbs.SolutionViewer()
