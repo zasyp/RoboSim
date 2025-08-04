@@ -499,7 +499,6 @@ plt.grid()
 
 plt.subplot(3, 4, 12)
 plt.plot(times, epsilon3_calc, 'b-', label='Calculated')
-plt.plot(times, ideal_accelerations[:, 3], 'r--', label='Ideal')
 # plt.plot(times, epsilon3, 'r-', label='Sensor')
 plt.title('Epsilon3 (rad/s²)')
 plt.legend()
@@ -576,7 +575,6 @@ plt.xlabel('Time (s)')
 plt.grid()
 
 
-plt.tight_layout(pad=3.0)
 plt.savefig('all_errors.png')
 plt.close()
 # =================================
