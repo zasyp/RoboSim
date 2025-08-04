@@ -475,27 +475,34 @@ plt.grid()
 
 # Acceleration plots (row 3) - unchanged
 plt.subplot(3, 4, 9)
-plt.plot(times, verticalAcc_calc)
+plt.plot(times, verticalAcc_calc, 'b-', label='Calculated')
+plt.plot(times, ideal_accelerations[:, 0], 'r--', label='Ideal')
 plt.title('Vertical Acceleration (m/s²)')
+plt.legend()
 plt.grid()
 
 plt.subplot(3, 4, 10)
 plt.plot(times, epsilon1_calc, 'b-', label='Calculated')
+plt.plot(times, ideal_accelerations[:, 1], 'r--', label='Ideal')
 # plt.plot(times, epsilon1, 'r-', label='Sensor')
 plt.title('Epsilon1 (rad/s²)')
+plt.legend()
 plt.grid()
 
 plt.subplot(3, 4, 11)
 plt.plot(times, epsilon2_calc, 'b-', label='Calculated')
+plt.plot(times, ideal_accelerations[:, 2], 'r--', label='Ideal')
 # plt.plot(times, epsilon2, 'r-', label='Sensor')
 plt.title('Epsilon2 (rad/s²)')
+plt.legend()
 plt.grid()
 
 plt.subplot(3, 4, 12)
-plt.plot(times, ideal_accelerations[:, 3], 'r--', label='Ideal')
 plt.plot(times, epsilon3_calc, 'b-', label='Calculated')
+plt.plot(times, ideal_accelerations[:, 3], 'r--', label='Ideal')
 # plt.plot(times, epsilon3, 'r-', label='Sensor')
 plt.title('Epsilon3 (rad/s²)')
+plt.legend()
 plt.grid()
 
 plt.tight_layout(pad=2.0)
@@ -505,37 +512,73 @@ plt.close()
 # =================================
 # ERROR PLOTS (vertical, theta1, theta2)
 # =================================
-plt.figure(figsize=(12, 8))
+plt.figure(figsize=(15, 15))
 
-# Vertical position error
-error_vertical = ideal_vertical_position - verticalDisp
-plt.subplot(3, 1, 1)
-plt.plot(times, error_vertical)
+# Position errors (row 1)
+plt.subplot(3, 4, 1)
+plt.plot(times, ideal_vertical_position - verticalDisp)
 plt.title('Vertical Position Error')
 plt.ylabel('Error (m)')
 plt.grid()
 
-# Theta1 error (in radians)
-error_theta1 = ideal_positions[:, 1] - theta1
-plt.subplot(3, 1, 2)
-plt.plot(times, error_theta1)
+plt.subplot(3, 4, 2)
+plt.plot(times, ideal_positions[:, 1] - theta1)
 plt.title('Theta1 Error')
 plt.ylabel('Error (rad)')
 plt.grid()
 
-# Theta2 error (in radians)
-error_theta2 = ideal_positions[:, 2] - theta2
-plt.subplot(3, 1, 3)
-plt.plot(times, error_theta2)
+plt.subplot(3, 4, 3)
+plt.plot(times, ideal_positions[:, 2] - theta2)
 plt.title('Theta2 Error')
 plt.ylabel('Error (rad)')
+plt.grid()
+
+# Velocity errors (row 2)
+plt.subplot(3, 4, 5)
+plt.plot(times, ideal_velocities[:, 0] - verticalVel)
+plt.title('Vertical Velocity Error')
+plt.ylabel('Error (m/s)')
+plt.grid()
+
+plt.subplot(3, 4, 6)
+plt.plot(times, ideal_velocities[:, 1] - omega1)
+plt.title('Omega1 Error')
+plt.ylabel('Error (rad/s)')
+plt.grid()
+
+plt.subplot(3, 4, 7)
+plt.plot(times, ideal_velocities[:, 2] - omega2)
+plt.title('Omega2 Error')
+plt.ylabel('Error (rad/s)')
+plt.grid()
+
+
+# Acceleration errors (row 3)
+plt.subplot(3, 4, 9)
+plt.plot(times, ideal_accelerations[:, 0] - verticalAcc_calc)
+plt.title('Vertical Acceleration Error')
+plt.ylabel('Error (m/s²)')
 plt.xlabel('Time (s)')
 plt.grid()
 
-plt.tight_layout()
-plt.savefig('position_errors.png')
-plt.close()
+plt.subplot(3, 4, 10)
+plt.plot(times, ideal_accelerations[:, 1] - epsilon1_calc)
+plt.title('Epsilon1 Error')
+plt.ylabel('Error (rad/s²)')
+plt.xlabel('Time (s)')
+plt.grid()
 
+plt.subplot(3, 4, 11)
+plt.plot(times, ideal_accelerations[:, 2] - epsilon2_calc)
+plt.title('Epsilon2 Error')
+plt.ylabel('Error (rad/s²)')
+plt.xlabel('Time (s)')
+plt.grid()
+
+
+plt.tight_layout(pad=3.0)
+plt.savefig('all_errors.png')
+plt.close()
 # =================================
 # FORCE AND TORQUE PLOTS (cylinder, link1, link2, link3)
 # =================================
