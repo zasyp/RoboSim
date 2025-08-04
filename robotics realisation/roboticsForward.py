@@ -100,8 +100,8 @@ def PreStepUF(mbs, t):
 mbs.SetPreStepUserFunction(PreStepUF)
 
 q1 = [0.1, -0.5 * pi, pi, 0]
-q2 = [0.3, 1* pi, -0.5*pi, 0]
-q3 = [0.2, 0.5 * pi, 0.4*pi, 0]
+q2 = [0.3, 0.5* pi, -0.5*pi, 0]
+q3 = [0.2, -0.5 * pi, 0.4*pi, 0]
 q4 = [0.15, -0.3 * pi, -0.3*pi, 0]
 q5 = [0, 0, 0, 0]
 
@@ -366,13 +366,18 @@ times = theta1_data[:, 0]
 # Extract actual sensor data
 verticalDisp = verticalDisp_data[:, 3]  # z-component
 theta1 = theta1_data[:, 3]  # rotation z-component (in radians)
-theta2 = theta2_data[:, 3]  # rotation z-component (in radians)
-theta3 = theta3_data[:, 3]  # rotation z-component (in radians)
+theta2 = theta2_data[:, 3] - theta1  # rotation z-component (in radians)
+theta3 = theta3_data[:, 3] - theta2 - theta1  # rotation z-component (in radians)
 
 verticalVel = verticalVel_data[:, 3]  # z-velocity
 omega1 = omega1_data[:, 3]  # angular velocity z-component (in rad/s)
-omega2 = omega2_data[:, 3]  # angular velocity z-component (in rad/s)
-omega3 = omega3_data[:, 3]  # angular velocity z-component (in rad/s)
+omega2 = omega2_data[:, 3] - omega1  # angular velocity z-component (in rad/s)
+omega3 = omega3_data[:, 3] - omega2 - omega1 # angular velocity z-component (in rad/s)
+
+verticalAcc = verticalAcc_data[:, 3]
+epsilon1 = epsilon1_data[:, 3]
+epsilon2 = epsilon2_data[:, 3] - epsilon1_data[:, 3]
+epsilon3 = epsilon3_data[:, 3] - epsilon1_data[:, 3] - epsilon2_data[:, 3]
 
 # Calculate ideal trajectory values
 n = len(times)
@@ -412,7 +417,7 @@ plt.grid()
 
 # Theta2
 plt.subplot(3, 4, 3)
-plt.plot(times, theta2 - theta1, 'b-', label='Actual')
+plt.plot(times, theta2, 'b-', label='Actual')
 plt.plot(times, ideal_positions[:, 2], 'r--', label='Ideal')
 plt.title('Theta2 (rad)')
 plt.legend()
@@ -420,7 +425,7 @@ plt.grid()
 
 # Theta3
 plt.subplot(3, 4, 4)
-plt.plot(times, theta3 - theta2 - theta1, 'b-', label='Actual')
+plt.plot(times, theta3, 'b-', label='Actual')
 plt.title('Theta3 (rad)')
 plt.legend()
 plt.grid()
@@ -444,7 +449,7 @@ plt.grid()
 
 # Omega2
 plt.subplot(3, 4, 7)
-plt.plot(times, omega2 - omega1, 'b-', label='Actual')
+plt.plot(times, omega2, 'b-', label='Actual')
 plt.plot(times, ideal_velocities[:, 2], 'r--', label='Ideal')
 plt.title('Omega2 (rad/s)')
 plt.legend()
@@ -452,29 +457,29 @@ plt.grid()
 
 # Omega3
 plt.subplot(3, 4, 8)
-plt.plot(times, omega3 - omega2 - omega1, 'b-', label='Actual')
+plt.plot(times, omega3, 'b-', label='Actual')
 plt.title('Omega3 (rad/s)')
 plt.legend()
 plt.grid()
 
 # Acceleration plots (row 3) - unchanged
 plt.subplot(3, 4, 9)
-plt.plot(verticalAcc_data[:, 0], verticalAcc_data[:, 3])
+plt.plot(times, verticalAcc)
 plt.title('Vertical Acceleration (m/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 10)
-plt.plot(epsilon1_data[:, 0], epsilon1_data[:, 3])
+plt.plot(times, epsilon1)
 plt.title('Epsilon1 (rad/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 11)
-plt.plot(epsilon2_data[:, 0], epsilon2_data[:, 3])
+plt.plot(times, epsilon2)
 plt.title('Epsilon2 (rad/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 12)
-plt.plot(epsilon3_data[:, 0], epsilon3_data[:, 3])
+plt.plot(times, epsilon3)
 plt.title('Epsilon3 (rad/s²)')
 plt.grid()
 
@@ -504,7 +509,7 @@ plt.ylabel('Error (rad)')
 plt.grid()
 
 # Theta2 error (in radians)
-error_theta2 = ideal_positions[:, 2] - theta2 - theta1
+error_theta2 = ideal_positions[:, 2] - theta2
 plt.subplot(3, 1, 3)
 plt.plot(times, error_theta2)
 plt.title('Theta2 Error')
