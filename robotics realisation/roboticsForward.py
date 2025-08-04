@@ -379,6 +379,11 @@ epsilon1 = epsilon1_data[:, 3]
 epsilon2 = epsilon2_data[:, 3] - epsilon1_data[:, 3]
 epsilon3 = epsilon3_data[:, 3] - epsilon1_data[:, 3] - epsilon2_data[:, 3]
 
+verticalAcc_calc = np.gradient(verticalVel, times)
+epsilon1_calc = np.gradient(omega1, times)
+epsilon2_calc = np.gradient(omega2, times)
+epsilon3_calc = np.gradient(omega3, times)
+
 # Calculate ideal trajectory values
 n = len(times)
 ideal_positions = np.zeros((n, 4))  # [vertical, theta1, theta2, theta3]
@@ -464,22 +469,25 @@ plt.grid()
 
 # Acceleration plots (row 3) - unchanged
 plt.subplot(3, 4, 9)
-plt.plot(times, verticalAcc)
+plt.plot(times, verticalAcc_calc)
 plt.title('Vertical Acceleration (m/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 10)
-plt.plot(times, epsilon1)
+plt.plot(times, epsilon1_calc, 'b-', label='Calculated')
+# plt.plot(times, epsilon1, 'r-', label='Sensor')
 plt.title('Epsilon1 (rad/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 11)
-plt.plot(times, epsilon2)
+plt.plot(times, epsilon2_calc, 'b-', label='Calculated')
+# plt.plot(times, epsilon2, 'r-', label='Sensor')
 plt.title('Epsilon2 (rad/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 12)
-plt.plot(times, epsilon3)
+plt.plot(times, epsilon3_calc, 'b-', label='Calculated')
+# plt.plot(times, epsilon3, 'r-', label='Sensor')
 plt.title('Epsilon3 (rad/s²)')
 plt.grid()
 
@@ -520,6 +528,11 @@ plt.grid()
 plt.tight_layout()
 plt.savefig('position_errors.png')
 plt.close()
+
+# =================================
+# DIFFERENTIATION VELOCITIES TO CALCULATE EPSILON (link1, link2, link3)
+# =================================
+
 
 # =================================
 # FORCE AND TORQUE PLOTS (cylinder, link1, link2, link3)
