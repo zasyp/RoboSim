@@ -262,6 +262,7 @@ epsilon3Sensor = mbs.AddSensor(
     )
 )
 
+# Failed force and torque sensors
 # verticalForceSens = mbs.AddSensor(
 #     SensorKinematicTree(
 #         objectNumber = oKT,
@@ -280,7 +281,7 @@ epsilon3Sensor = mbs.AddSensor(
 #         objectNumber = oKT,
 #         linkNumber = 1,
 #         localPosition = [0,0,0],
-#         outputVariableType = exu.OutputVariableType.Torque,
+#         outputVariableType = exu.OutputVariableType.Force,
 #         storeInternal = True,
 #         writeToFile = True,
 #         fileName = os.path.join(output_dir, "torque1_deg.txt"),
@@ -288,7 +289,7 @@ epsilon3Sensor = mbs.AddSensor(
 #     )
 # )
 #
-# torqueSensor1 = mbs.AddSensor(
+# torqueSensor2 = mbs.AddSensor(
 #     SensorKinematicTree(
 #         objectNumber = oKT,
 #         linkNumber = 2,
@@ -301,7 +302,7 @@ epsilon3Sensor = mbs.AddSensor(
 #     )
 # )
 #
-# torqueSensor1 = mbs.AddSensor(
+# torqueSensor3 = mbs.AddSensor(
 #     SensorKinematicTree(
 #         objectNumber = oKT,
 #         linkNumber = 3,
@@ -327,6 +328,7 @@ simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
 simulationSettings.solutionSettings.solutionWritePeriod = 0.005 #store every 5 ms
 simulationSettings.solutionSettings.sensorsWritePeriod  = 0.005
+
 SC.visualizationSettings.window.renderWindowSize=(1600,1200)
 SC.visualizationSettings.openGL.multiSampling = 4
 SC.visualizationSettings.general.autoFitScene = False
@@ -337,7 +339,8 @@ SC.visualizationSettings.bodies.kinematicTree.showJointFrames = False
 SC.visualizationSettings.openGL.multiSampling=4
 SC.visualizationSettings.openGL.lineWidth = 2
 SC.visualizationSettings.openGL.light0position=(-6,2,12,0)
-exu.StartRenderer()
+
+SC.renderer.Start()
 if 'renderState' in exu.sys: #reload old view
     SC.SetRenderState(exu.sys['renderState'])
 
@@ -388,11 +391,14 @@ epsilon3_calc = np.gradient(omega3, times)
 n = len(times)
 ideal_positions = np.zeros((n, 4))  # [vertical, theta1, theta2, theta3]
 ideal_velocities = np.zeros((n, 4))
+ideal_accelerations = np.zeros((n, 4))
 
 for i, t in enumerate(times):
     u, v, a = robotTrajectory.Evaluate(t)
     ideal_positions[i] = u
     ideal_velocities[i] = v
+    ideal_accelerations[i] = a
+
 
 # Calculate initial offset for vertical position
 z0 = verticalDisp_data[0, 3]  # initial z-position
@@ -486,6 +492,7 @@ plt.title('Epsilon2 (rad/s²)')
 plt.grid()
 
 plt.subplot(3, 4, 12)
+plt.plot(times, ideal_accelerations[:, 3], 'r--', label='Ideal')
 plt.plot(times, epsilon3_calc, 'b-', label='Calculated')
 # plt.plot(times, epsilon3, 'r-', label='Sensor')
 plt.title('Epsilon3 (rad/s²)')
@@ -528,11 +535,6 @@ plt.grid()
 plt.tight_layout()
 plt.savefig('position_errors.png')
 plt.close()
-
-# =================================
-# DIFFERENTIATION VELOCITIES TO CALCULATE EPSILON (link1, link2, link3)
-# =================================
-
 
 # =================================
 # FORCE AND TORQUE PLOTS (cylinder, link1, link2, link3)
