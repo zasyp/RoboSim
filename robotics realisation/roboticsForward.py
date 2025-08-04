@@ -100,9 +100,9 @@ def PreStepUF(mbs, t):
 mbs.SetPreStepUserFunction(PreStepUF)
 
 q1 = [0.1, -0.5 * pi, pi, 0]
-q2 = [0.3, 0.2* pi, -0.15*pi, 0]
+q2 = [0.3, 1* pi, -0.5*pi, 0]
 q3 = [0.2, 0.5 * pi, 0.4*pi, 0]
-q4 = [0.15, -0.3 * pi, 0.3*pi, 0]
+q4 = [0.15, -0.3 * pi, -0.3*pi, 0]
 q5 = [0, 0, 0, 0]
 
 robotTrajectory.Add(ProfileConstantAcceleration(q1,2))
@@ -420,7 +420,7 @@ plt.grid()
 
 # Theta3
 plt.subplot(3, 4, 4)
-plt.plot(times, theta3, 'b-', label='Actual')
+plt.plot(times, theta3 - theta2 - theta1, 'b-', label='Actual')
 plt.title('Theta3 (rad)')
 plt.legend()
 plt.grid()
@@ -452,7 +452,7 @@ plt.grid()
 
 # Omega3
 plt.subplot(3, 4, 8)
-plt.plot(times, omega3, 'b-', label='Actual')
+plt.plot(times, omega3 - omega2 - omega1, 'b-', label='Actual')
 plt.title('Omega3 (rad/s)')
 plt.legend()
 plt.grid()
@@ -504,7 +504,7 @@ plt.ylabel('Error (rad)')
 plt.grid()
 
 # Theta2 error (in radians)
-error_theta2 = ideal_positions[:, 2] - theta2 + theta1
+error_theta2 = ideal_positions[:, 2] - theta2 - theta1
 plt.subplot(3, 1, 3)
 plt.plot(times, error_theta2)
 plt.title('Theta2 Error')
