@@ -541,5 +541,34 @@ with open("Torques.txt", "w") as f:
     for tau in torque_values:
         f.write(str(tau) + "\n")
 
+with open('Torques.txt', 'r') as file:
+    data = file.readlines()
+
+# Преобразование данных в массив numpy
+torques = []
+for line in data:
+    if line.strip():  # Пропуск пустых строк
+        row = np.fromstring(line.strip('[]\n'), sep=' ')
+        torques.append(row)
+torques = np.array(torques)
+
+# Время (предполагаем, что это шаги, так как время не указано)
+time = np.arange(len(torques))
+
+# Построение графиков
+plt.figure(figsize=(12, 8))
+
+plt.plot(time, torques[:, 1], label='Звено 1')
+plt.plot(time, torques[:, 2], label='Звено 2')
+plt.plot(time, torques[:, 3], label='Звено 3')
+
+plt.title('Статические моменты в 3-х звеньях робота')
+plt.xlabel('Время (шаги)')
+plt.ylabel('Момент (Н·м)')
+plt.legend()
+plt.grid(True)
+
+plt.show()
+
 exu.StopRenderer()
 mbs.SolutionViewer()
