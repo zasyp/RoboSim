@@ -540,6 +540,7 @@ plt.grid()
 
 plt.savefig('all_errors.png')
 plt.close()
+
 # =================================
 # FORCE AND TORQUE PLOTS (cylinder, link1, link2, link3)
 # =================================
