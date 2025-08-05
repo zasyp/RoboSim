@@ -4,6 +4,7 @@ from exudyn.utilities import *
 from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
 from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
+from exudyn.robotics.special import *
 from helpful.constants import *
 
 visualisationBox = VRobotBase(graphicsData=[graphicsBodyBox])
@@ -102,19 +103,24 @@ def PreStepUF(mbs, t):
     if useKT:
         staticTorques = ComputeMBSstaticRobotTorques(robot)
         # print("tau=", staticTorques)
-        torque_values.append(staticTorques)
         [u,v,a] = robotTrajectory.Evaluate(t)
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
         mbs.SetObjectParameter(oKT, 'jointForceVector', staticTorques)
+
+        HT = robot.JointHT(u)
+        jointJacs = JointJacobian(robot, HT, HT)
+        MM = MassMatrix(robot, HT, jointJacs)
+        dynamical = MM.dot(a)
+        torque_values.append(dynamical)
     return True
 
 mbs.SetPreStepUserFunction(PreStepUF)
 
-q1 = [0, -0.5 * pi, 0, 0]
-q2 = [0, 0.5* pi, 0, 0]
-q3 = [0, -0.5 * pi, 0, 0]
-q4 = [0, -0.3 * pi, 0, 0]
+q1 = [0.1, -0.5 * pi, 0.3 * pi, 0]
+q2 = [0.2, 0.5* pi, -0.3 * pi, 0]
+q3 = [0.1, -0.5 * pi, -0.1 * pi, 0]
+q4 = [0.3, -0.3 * pi, -0.4 * pi, 0]
 q5 = [0, 0, 0, 0]
 
 robotTrajectory.Add(ProfileConstantAcceleration(q1,2))
@@ -537,14 +543,13 @@ plt.close()
 # =================================
 # FORCE AND TORQUE PLOTS (cylinder, link1, link2, link3)
 # =================================
-with open("Torques.txt", "w") as f:
+with open("sensor_outputs/Torques.txt", "w") as f:
     for tau in torque_values:
         f.write(str(tau) + "\n")
 
-with open('Torques.txt', 'r') as file:
+with open('sensor_outputs/Torques.txt', 'r') as file:
     data = file.readlines()
 
-# Преобразование данных в массив numpy
 torques = []
 for line in data:
     if line.strip():  # Пропуск пустых строк
@@ -552,19 +557,17 @@ for line in data:
         torques.append(row)
 torques = np.array(torques)
 
-# Время (предполагаем, что это шаги, так как время не указано)
 time = np.arange(len(torques))
 
-# Построение графиков
 plt.figure(figsize=(12, 8))
+plt.plot(time, torques[:, 0], label='Cylinder')
+plt.plot(time, torques[:, 1], label='Link 1')
+plt.plot(time, torques[:, 2], label='Link 2')
+plt.plot(time, torques[:, 3], label='Link 3')
 
-plt.plot(time, torques[:, 1], label='Звено 1')
-plt.plot(time, torques[:, 2], label='Звено 2')
-plt.plot(time, torques[:, 3], label='Звено 3')
-
-plt.title('Статические моменты в 3-х звеньях робота')
-plt.xlabel('Время (шаги)')
-plt.ylabel('Момент (Н·м)')
+plt.title('Force and Torques in Links')
+plt.xlabel('Time (steps)')
+plt.ylabel('Torque (N·m)')
 plt.legend()
 plt.grid(True)
 
