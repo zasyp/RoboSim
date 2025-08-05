@@ -90,11 +90,23 @@ mbs.AddObject(ObjectConnectorCoordinate(
 jointList = [0]*robot.NumberOfLinks()
 
 robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=0)
+
+def ComputeMBSstaticRobotTorques(robot):
+    q = mbs.GetObjectOutputBody(oKT, exu.OutputVariableType.Coordinates, localPosition=[0,0,0])
+    HT=robot.JointHT(q)
+    return robot.StaticTorques(HT)
+
+
+torque_values = []
 def PreStepUF(mbs, t):
     if useKT:
+        staticTorques = ComputeMBSstaticRobotTorques(robot)
+        # print("tau=", staticTorques)
+        torque_values.append(staticTorques)
         [u,v,a] = robotTrajectory.Evaluate(t)
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
+        mbs.SetObjectParameter(oKT, 'jointForceVector', staticTorques)
     return True
 
 mbs.SetPreStepUserFunction(PreStepUF)
@@ -261,66 +273,11 @@ epsilon3Sensor = mbs.AddSensor(
         name = "epsilon3_deg"
     )
 )
-
-# Failed force and torque sensors
-# verticalForceSens = mbs.AddSensor(
-#     SensorKinematicTree(
-#         objectNumber = oKT,
-#         linkNumber = 0,
-#         localPosition = [0,0,0],
-#         outputVariableType = exu.OutputVariableType.ForceLocal,
-#         storeInternal = True,
-#         writeToFile = True,
-#         fileName = os.path.join(output_dir, "verticalForce.txt"),
-#         name = "verticalForce"
-#     )
-# )
-#
-# torqueSensor1 = mbs.AddSensor(
-#     SensorKinematicTree(
-#         objectNumber = oKT,
-#         linkNumber = 1,
-#         localPosition = [0,0,0],
-#         outputVariableType = exu.OutputVariableType.Force,
-#         storeInternal = True,
-#         writeToFile = True,
-#         fileName = os.path.join(output_dir, "torque1_deg.txt"),
-#         name = "torque1_Nm"
-#     )
-# )
-#
-# torqueSensor2 = mbs.AddSensor(
-#     SensorKinematicTree(
-#         objectNumber = oKT,
-#         linkNumber = 2,
-#         localPosition = [0,0,0],
-#         outputVariableType = exu.OutputVariableType.Torque,
-#         storeInternal = True,
-#         writeToFile = True,
-#         fileName = os.path.join(output_dir, "torque2_Nm.txt"),
-#         name = "torque2_Nm"
-#     )
-# )
-#
-# torqueSensor3 = mbs.AddSensor(
-#     SensorKinematicTree(
-#         objectNumber = oKT,
-#         linkNumber = 3,
-#         localPosition = [0,0,0],
-#         outputVariableType = exu.OutputVariableType.Torque,
-#         storeInternal = True,
-#         writeToFile = True,
-#         fileName = os.path.join(output_dir, "torque2_Nm.txt"),
-#         name = "torque3_Nm"
-#     )
-# )
-
-
 mbs.Assemble()
 
 simulationSettings = exu.SimulationSettings() #takes currently set values or default values
 
-tEnd = 30 #simulation time
+tEnd = 10 #simulation time
 h = 0.25*1e-3 #step size
 
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
@@ -580,6 +537,9 @@ plt.close()
 # =================================
 # FORCE AND TORQUE PLOTS (cylinder, link1, link2, link3)
 # =================================
+with open("Torques.txt", "w") as f:
+    for tau in torque_values:
+        f.write(str(tau) + "\n")
 
 exu.StopRenderer()
 mbs.SolutionViewer()
