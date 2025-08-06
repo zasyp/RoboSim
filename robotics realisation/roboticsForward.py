@@ -99,6 +99,7 @@ def ComputeMBSstaticRobotTorques(robot):
 
 
 torque_values = []
+mass_matrix_debug = []
 def PreStepUF(mbs, t):
     if useKT:
         staticTorques = ComputeMBSstaticRobotTorques(robot)
@@ -111,6 +112,7 @@ def PreStepUF(mbs, t):
         HT = robot.JointHT(u)
         jointJacs = JointJacobian(robot, HT, HT)
         MM = MassMatrix(robot, HT, jointJacs)
+        mass_matrix_debug.append(MM)
         dynamical = MM.dot(a)
         torque_values.append(dynamical)
     return True
@@ -573,6 +575,11 @@ plt.legend()
 plt.grid(True)
 
 plt.show()
+
+# Saving mass matrix for debugging
+with open("sensor_outputs/MassMatrix.txt", "w") as f:
+    for m in mass_matrix_debug:
+        f.write(str(m) + "\n")
 
 exu.StopRenderer()
 mbs.SolutionViewer()
