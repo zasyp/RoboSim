@@ -152,11 +152,11 @@ def pre_step_uf(mbs, t, robot, traj, oKT, torque_values):
         u, v, a = traj.Evaluate(t)
         q_t = v
         q_tt = a
-        static_torques = RNEA(q, q_t, q_tt, mbs, oKT, robot, g)
+        torques = RNEA(q, q_t, q_tt, mbs, oKT, robot, g)
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
-        mbs.SetObjectParameter(oKT, 'jointForceVector', static_torques)
-        torque_values.append(static_torques)
+        mbs.SetObjectParameter(oKT, 'jointForceVector', torques)
+        torque_values.append(torques)
     return True
 
 def add_sensors(mbs, oKT, output_dir):
