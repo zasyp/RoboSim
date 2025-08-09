@@ -1,7 +1,7 @@
 import exudyn.graphics as graphics
 import numpy as np
 
-g = [0, -9.81, 0]
+g = np.array([0., 0., -9.81])
 l1 = 0.205
 l2 = 0.205
 l3 = 0.39

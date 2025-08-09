@@ -30,7 +30,7 @@ robot.AddLink(
     COM=com_cyl_global,
     inertia=inertiaTensorCylinder,
     jointType='Pz',
-    parent=-2,
+    parent=-1,
     preHT=preHT_Cyl,
     visualization=visualisationCylinder,
     PDcontrol=(kp_trans, kd_trans)
@@ -41,7 +41,7 @@ robot.AddLink(
     COM=joint1_pos,
     inertia=inertiaTensor1,
     jointType='Rz',
-    parent=-2,
+    parent=0,
     preHT=preHT_1,
     visualization=visualisationLink1,
     PDcontrol=(kp_rot, kd_rot)
@@ -52,7 +52,7 @@ robot.AddLink(
     COM=joint2_pos,
     inertia=inertiaTensor2,
     jointType='Rz',
-    parent=-2,
+    parent=1,
     preHT=preHT_2,
     visualization=visualisationLink2,
     PDcontrol=(kp_rot2, kd_rot2)
@@ -63,7 +63,7 @@ robot.AddLink(
     COM=joint3_pos,
     inertia=inertiaTensor3,
     jointType='Rz',
-    parent=-2,
+    parent=2,
     preHT=preHT_3,
     visualization=visualisationLink3,
     PDcontrol=(0, 0)
@@ -100,21 +100,106 @@ def ComputeMBSstaticRobotTorques(robot):
 
 torque_values = []
 mass_matrix_debug = []
+
+def joint_motion_subspace(joint_type):
+    if joint_type == 'Px': return np.array([0,0,0,1,0,0])
+    if joint_type == 'Py': return np.array([0,0,0,0,1,0])
+    if joint_type == 'Pz': return np.array([0,0,0,0,0,1])
+    if joint_type == 'Rx': return np.array([1,0,0,0,0,0])
+    if joint_type == 'Ry': return np.array([0,1,0,0,0,0])
+    if joint_type == 'Rz': return np.array([0,0,1,0,0,0])
+    raise ValueError(f"Unknown joint type: {joint_type}")
+
+def skew(v):
+    return np.array([[0, -v[2], v[1]],
+                     [v[2], 0, -v[0]],
+                     [-v[1], v[0], 0]])
+
+
+def RNEA(q, q_t, q_tt, mbs, oKT, robot, g):
+    # Number of links (including base if present)
+    N_B = robot.NumberOfLinks()
+    v = np.zeros((N_B, 6))      # spatial velocity: [omega(3); v(3)]
+    a = np.zeros((N_B, 6))      # spatial acceleration: [alpha(3); a(3)]
+    f = np.zeros((N_B, 6))      # spatial force: [moment(3); force(3)]
+    tau = np.zeros(N_B)         # joint torques/forces
+
+    # Get parameters from ObjectKinematicTree
+    link_parents = mbs.GetObjectParameter(oKT, 'linkParents')
+    link_masses = mbs.GetObjectParameter(oKT, 'linkMasses')
+    link_inertias = mbs.GetObjectParameter(oKT, 'linkInertiasCOM')
+
+    # Forward pass: compute spatial velocities and accelerations
+    for i in range(N_B):
+        # get parent spatial state (if any)
+        parent = link_parents[i]
+        if parent != -1:
+            a[i][3:] = -g
+            v[i] = v[parent].copy()
+        else:
+            v[i] = np.zeros(6)
+
+        # add joint contribution to velocity
+        if i > 0:
+            phi = joint_motion_subspace(robot.links[i].jointType)  # 6-vector
+            v[i] += phi * q_t[i]
+
+        # accelerations: start from parent
+        if parent != -1:
+            a[i] = a[parent].copy()
+        else:
+            a[i] = np.zeros(6)
+            a[i][3:] = -g  # ensure gravity on base
+
+        # add joint contributions to acceleration
+        if i > 0:
+            phi = joint_motion_subspace(robot.links[i].jointType)
+            # angular part: alpha contribution; plus coriolis-like term phi x (omega * qdot)
+            # here phi[:3] are angular components, phi[3:] linear components
+            a[i][:3] += phi[:3] * q_tt[i] + np.cross(v[i][:3], phi[:3] * q_t[i])
+            a[i][3:] += phi[3:] * q_tt[i] + np.cross(v[i][:3], phi[3:] * q_t[i])
+
+        # spatial inertia * spatial acceleration -> spatial force
+        # approximate rotational moment = I * alpha (link_inertias are 3x3 for COM)
+        omega = v[i][:3]
+        alpha = a[i][:3]
+        moment = link_inertias[i].dot(alpha) + np.cross(omega, link_inertias[i].dot(omega))
+        force  = link_masses[i] * a[i][3:]
+        f[i] = np.hstack((moment, force))
+
+    # Backward pass: propagate forces and compute joint torques
+    for i in range(N_B - 1, -1, -1):
+        if i > 0:
+            phi = joint_motion_subspace(robot.links[i].jointType)
+            tau[i] = phi.dot(f[i])
+        else:
+            tau[i] = 0.0
+
+        parent = link_parents[i]
+        if parent != -1:
+            HT_parent_to_i = np.linalg.inv(robot.JointHT(q)[parent]) @ robot.JointHT(q)[
+                i]  # transform from child to parent frame
+            R = HT_parent_to_i[:3, :3]
+            p = HT_parent_to_i[:3, 3]
+            X_wrench = np.block([
+                [R, skew(p) @ R],
+                [np.zeros((3, 3)), R]
+            ])
+            f[parent] += X_wrench @ f[i]
+
+    return tau
+
 def PreStepUF(mbs, t):
     if useKT:
-        staticTorques = ComputeMBSstaticRobotTorques(robot)
-        # print("tau=", staticTorques)
-        [u,v,a] = robotTrajectory.Evaluate(t)
+        q = mbs.GetObjectOutputBody(oKT, exu.OutputVariableType.Coordinates, [0, 0, 0])
+        u, v, a = robotTrajectory.Evaluate(t)
+        q_t = v
+        q_tt = a
+        torques = RNEA(q, q_t, q_tt, mbs, oKT, robot, g)
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
-        mbs.SetObjectParameter(oKT, 'jointForceVector', staticTorques)
-
-        HT = robot.JointHT(u)
-        jointJacs = JointJacobian(robot, HT, HT)
-        MM = MassMatrix(robot, HT, jointJacs)
-        mass_matrix_debug.append(MM)
-        dynamical = MM.dot(a)
-        torque_values.append(dynamical)
+        mbs.SetObjectParameter(oKT, 'jointForceVector', torques)
+        torque_values.append(torques)
     return True
 
 mbs.SetPreStepUserFunction(PreStepUF)
