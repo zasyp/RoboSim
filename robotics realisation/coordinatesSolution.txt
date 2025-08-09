@@ -1,5 +1,5 @@
 #Exudyn implicit second order time integration solver solution file
-#simulation started=2025-08-09,17:11:24
+#simulation started=2025-08-09,17:33:18
 #columns contain: time, ODE2 displacements, ODE2 velocities, ODE2 accelerations, AE coordinates
 #number of system coordinates [nODE2, nODE1, nAlgebraic, nData] = [4,0,1,0]
 #number of written coordinates [nODE2, nVel2, nAcc2, nODE1, nVel1, nAlgebraic, nData] = [4,4,4,0,0,1,0]
@@ -2008,5 +2008,5 @@
 9.99,1.49999997e-05,-4.712388893e-05,-6.283185184e-05,3.141592592e-05,-0.003,0.00942477796,0.01256637061,-0.006283185307,-9.809998673,-2.321338255e-07,5.937020884e-08,-2.968510442e-08,0.03208422739
 9.995,3.749999698e-06,-1.178097158e-05,-1.570796204e-05,7.853981021e-06,-0.0015,0.00471238898,0.006283185307,-0.003141592653,-9.809998676,-2.316654002e-07,6.476942021e-08,-3.238471011e-08,0.03206499441
 10,-3.014546224e-13,8.687187528e-13,1.224613436e-12,-6.12306718e-13,-3.084876884e-14,-2.743859607e-13,-4.321697132e-13,2.160848566e-13,-9.809998672,-2.324493309e-07,5.991194723e-08,-2.995597362e-08,0.03205858298
-#simulation finished=2025-08-09,17:11:49
-#Solver Info: cpuTime=24.7567,stepReductionFailed(or step failed)=0,discontinuousIterationSuccessful=1,newtonSolutionDiverged=0,massMatrixNotInvertible=0,total time steps=40000,total Newton iterations=40000,total Newton jacobians=40000
+#simulation finished=2025-08-09,17:34:02
+#Solver Info: cpuTime=43.2521,stepReductionFailed(or step failed)=0,discontinuousIterationSuccessful=1,newtonSolutionDiverged=0,massMatrixNotInvertible=0,total time steps=40000,total Newton iterations=40000,total Newton jacobians=40000

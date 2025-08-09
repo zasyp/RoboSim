@@ -68,6 +68,11 @@ def joint_motion_subspace(joint_type):
     if joint_type == 'Rz': return np.array([0,0,1,0,0,0])
     raise ValueError(f"Unknown joint type: {joint_type}")
 
+def skew(v):
+    return np.array([[0, -v[2], v[1]],
+                     [v[2], 0, -v[0]],
+                     [-v[1], v[0], 0]])
+
 def RNEA(q, q_t, q_tt, mbs, oKT, robot, g):
     # Number of links (including base if present)
     N_B = robot.NumberOfLinks()
@@ -113,36 +118,31 @@ def RNEA(q, q_t, q_tt, mbs, oKT, robot, g):
 
         # spatial inertia * spatial acceleration -> spatial force
         # approximate rotational moment = I * alpha (link_inertias are 3x3 for COM)
-        moment = link_inertias[i].dot(a[i][:3])
+        omega = v[i][:3]
+        alpha = a[i][:3]
+        moment = link_inertias[i].dot(alpha) + np.cross(omega, link_inertias[i].dot(omega))
         force  = link_masses[i] * a[i][3:]
         f[i] = np.hstack((moment, force))
 
     # Backward pass: propagate forces and compute joint torques
-    for i in range(N_B-1, -1, -1):
+    for i in range(N_B - 1, -1, -1):
         if i > 0:
-            # joint motion subspace for this joint
-            phi = joint_motion_subspace(robot.links[i].jointType)  # 6-vector
-            # joint torque/force is projection of spatial force onto phi
+            phi = joint_motion_subspace(robot.links[i].jointType)
             tau[i] = phi.dot(f[i])
         else:
             tau[i] = 0.0
 
         parent = link_parents[i]
         if parent != -1:
-            # Transform f[i] to parent frame before accumulation.
-            # NOTE: the exact transform depends on how you obtain HTs (robot.JointHT etc.)
-            # Keep the existing method for computing parent_to_i if it works in your setup,
-            # but ensure it yields a 6x6 spatial transform matrix X_parent_child.
-            try:
-                parent_to_i = robot.JointHT(q)[i].T.dot(robot.JointHT(q)[parent])
-                # If parent_to_i is a 4x4 homogeneous transform, you must convert it
-                # into a 6x6 spatial transform X before applying to a 6-vector f.
-                # Here we assume parent_to_i is already the correct 6x6 spatial transform.
-                f[parent] += parent_to_i.dot(f[i])
-            except Exception:
-                # Fallback: if transform is not ready/available, just accumulate forces in parent frame
-                # This is a safe fallback but may be incorrect if frames differ.
-                f[parent] += f[i]
+            HT_parent_to_i = np.linalg.inv(robot.JointHT(q)[parent]) @ robot.JointHT(q)[
+                i]  # transform from child to parent frame
+            R = HT_parent_to_i[:3, :3]
+            p = HT_parent_to_i[:3, 3]
+            X_wrench = np.block([
+                [R, skew(p) @ R],
+                [np.zeros((3, 3)), R]
+            ])
+            f[parent] += X_wrench @ f[i]
 
     return tau
 
