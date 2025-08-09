@@ -1,14 +1,14 @@
 #Exudyn implicit second order time integration sensor output file
 #measure KinematicTree number = 1
 #OutputVariableType = Displacement
-#simulation started = 2025-08-06,22:10:40
+#simulation started = 2025-08-09,16:49:59
 #columns contain: time, comma separated sensor values (e.g, x,y,z position coordinates)
 #number of sensor values = 3
 #Exudyn version = 1.10.0; Python3.13.2; Windows AVX2 FLOAT64
 #
 0,0,0,0
 0.005,0,0,1.25e-06
-0.01,0,0,5e-06
+0.01,0,0,4.999999999e-06
 0.015,0,0,1.125e-05
 0.02,0,0,2e-05
 0.025,0,0,3.125e-05
@@ -2001,9 +2001,9 @@
 9.96,0,0,0.0002399999997
 9.965,0,0,0.0001837499997
 9.97,0,0,0.0001349999997
-9.975,0,0,9.374999971e-05
-9.98,0,0,5.999999971e-05
-9.985,0,0,3.374999971e-05
-9.99,0,0,1.499999971e-05
-9.995,0,0,3.74999971e-06
-10,0,0,-2.897682094e-13
+9.975,0,0,9.37499997e-05
+9.98,0,0,5.99999997e-05
+9.985,0,0,3.37499997e-05
+9.99,0,0,1.49999997e-05
+9.995,0,0,3.749999698e-06
+10,0,0,-3.014255512e-13

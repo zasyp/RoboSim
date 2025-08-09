@@ -28,7 +28,7 @@ robot.AddLink(
     robotLink=RobotLink(
     mass=m_cyl,
     COM=com_cyl_global,
-    inertia=inertiaTensorCilinder,
+    inertia=inertiaTensorCylinder,
     jointType='Pz',
     parent=-2,
     preHT=preHT_Cyl,
