@@ -94,8 +94,8 @@ HT_tool = np.array([
     [0, 0, 0, 1]
 ])
 # Set PD control gains for joints that require control
-kp_trans = 1e100  # Prismatic joint proportional gain [N/m]
-kd_trans = 1e100  # Prismatic joint derivative gain [N·s/m]
+kp_trans = 1e6  # Prismatic joint proportional gain [N/m]
+kd_trans = 1e6  # Prismatic joint derivative gain [N·s/m]
 kp_rot = 1e100    # Revolute joint proportional gain [Nm/rad]
 kd_rot = 1e100     # Revolute joint derivative gain [Nm·s/rad]
 kp_rot2 = 1e100
