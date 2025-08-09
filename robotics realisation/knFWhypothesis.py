@@ -23,7 +23,7 @@ factorValue1 = -0.5
 g = np.array([0, 0, -9.81])  # Assuming gravity from constants
 output_dir = "sensor_outputs"
 os.makedirs(output_dir, exist_ok=True)
-tEnd = 10
+tEnd = 6
 h = 0.25e-3
 
 
@@ -32,19 +32,19 @@ def create_robot():
     robot = Robot(gravity=g, base=base, tool=RobotTool(HT=HT_tool))
 
     robot.AddLink(RobotLink(mass=m_cyl, COM=com_cyl_global, inertia=inertiaTensorCylinder,
-                            jointType='Pz', parent=-2, preHT=preHT_Cyl,
+                            jointType='Pz', parent=-1, preHT=preHT_Cyl,
                             visualization=vis_cyl, PDcontrol=(kp_trans, kd_trans)))
 
     robot.AddLink(RobotLink(mass=m1, COM=joint1_pos, inertia=inertiaTensor1,
-                            jointType='Rz', parent=-2, preHT=preHT_1,
+                            jointType='Rz', parent=0, preHT=preHT_1,
                             visualization=vis_link1, PDcontrol=(kp_rot, kd_rot)))
 
     robot.AddLink(RobotLink(mass=m2, COM=joint2_pos, inertia=inertiaTensor2,
-                            jointType='Rz', parent=-2, preHT=preHT_2,
+                            jointType='Rz', parent=1, preHT=preHT_2,
                             visualization=vis_link2, PDcontrol=(kp_rot2, kd_rot2)))
 
     robot.AddLink(RobotLink(mass=m3, COM=joint3_pos, inertia=inertiaTensor3,
-                            jointType='Rz', parent=-2, preHT=preHT_3,
+                            jointType='Rz', parent=2, preHT=preHT_3,
                             visualization=vis_link3, PDcontrol=(0, 0)))
 
     return robot
@@ -52,11 +52,11 @@ def create_robot():
 
 def create_trajectory():
     traj = Trajectory(initialCoordinates=q0, initialTime=0)
-    traj.Add(ProfileConstantAcceleration([0.1, -0.5 * np.pi, 0.3 * np.pi, 0], 2))
-    traj.Add(ProfileConstantAcceleration([0.2, 0.5 * np.pi, -0.3 * np.pi, 0], 2))
-    traj.Add(ProfileConstantAcceleration([0.1, -0.5 * np.pi, -0.1 * np.pi, 0], 2))
-    traj.Add(ProfileConstantAcceleration([0.3, -0.3 * np.pi, -0.4 * np.pi, 0], 2))
-    traj.Add(ProfileConstantAcceleration([0, 0, 0, 0], 2))
+    traj.Add(ProfileConstantAcceleration([0.1, -0.5 * np.pi, 0.3 * np.pi, 0], 1))
+    traj.Add(ProfileConstantAcceleration([0.2, 0.5 * np.pi, -0.3 * np.pi, 0], 1))
+    traj.Add(ProfileConstantAcceleration([0.1, -0.5 * np.pi, -0.1 * np.pi, 0], 1))
+    traj.Add(ProfileConstantAcceleration([0.3, -0.3 * np.pi, -0.4 * np.pi, 0], 1))
+    traj.Add(ProfileConstantAcceleration([0, 0, 0, 0], 1))
     return traj
 
 def joint_motion_subspace(joint_type):
@@ -78,7 +78,6 @@ def RNEA(q, q_t, q_tt, mbs, oKT, robot, g):
     N_B = robot.NumberOfLinks()
     v = np.zeros((N_B, 6))      # spatial velocity: [omega(3); v(3)]
     a = np.zeros((N_B, 6))      # spatial acceleration: [alpha(3); a(3)]
-    a[:, 3:] = -g               # set linear acceleration part to -g (gravity)
     f = np.zeros((N_B, 6))      # spatial force: [moment(3); force(3)]
     tau = np.zeros(N_B)         # joint torques/forces
 
@@ -92,6 +91,7 @@ def RNEA(q, q_t, q_tt, mbs, oKT, robot, g):
         # get parent spatial state (if any)
         parent = link_parents[i]
         if parent != -1:
+            a[i][3:] = -g
             v[i] = v[parent].copy()
         else:
             v[i] = np.zeros(6)
