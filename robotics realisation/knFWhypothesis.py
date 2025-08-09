@@ -413,14 +413,13 @@ def plot_torques(torque_values, tEnd):
 
     # Combined torque plot
     plt.figure(figsize=(12, 8))
-    plt.plot(torque_times, torques[:, 0], label='Cylinder (Pz)')
     plt.plot(torque_times, torques[:, 1], label='Link 1 (Rz)')
     plt.plot(torque_times, torques[:, 2], label='Link 2 (Rz)')
     plt.plot(torque_times, torques[:, 3], label='Link 3 (Rz)')
 
-    plt.title('Joint Actuation Forces and Torques', fontsize=14)
+    plt.title('Joint Torques', fontsize=14)
     plt.xlabel('Time (s)', fontsize=12)
-    plt.ylabel('Force/Torque (N or N·m)', fontsize=12)
+    plt.ylabel('Torque (N·m)', fontsize=12)
     plt.legend()
     plt.grid(True, alpha=0.7)
     plt.tight_layout()
