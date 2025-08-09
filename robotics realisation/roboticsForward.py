@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import matplotlib.pyplot as plt
 from exudyn.utilities import *
 from exudyn.rigidBodyUtilities import *
@@ -7,70 +8,83 @@ from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
 from exudyn.robotics.special import *
 from helpful.constants import *
 
+# ========================================
+# VISUALIZATION SETUP
+# ========================================
 visualisationBox = VRobotBase(graphicsData=[graphicsBodyBox])
 visualisationCylinder = VRobotLink(graphicsData=[graphicsBodyCylinder])
 visualisationLink1 = VRobotLink(graphicsData=[graphicsBody1])
 visualisationLink2 = VRobotLink(graphicsData=[graphicsBody2])
 visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 
+# ========================================
+# ROBOT CONFIGURATION
+# ========================================
 useKT = True
-q0 = np.array([0, 0, 0, 0])
+q0 = np.array([0, 0, 0, 0])  # Initial configuration
 
+# Create robot base
 baseBox = RobotBase(visualization=visualisationBox)
 
-robot=Robot(
+# Initialize robot with gravity and tool
+robot = Robot(
     gravity=g,
     base=baseBox,
     tool=RobotTool(HT=HT_tool)
 )
 
-robot.AddLink(
-    robotLink=RobotLink(
+# Add robot links with proper parent-child hierarchy
+robot.AddLink(RobotLink(
     mass=m_cyl,
     COM=com_cyl_global,
     inertia=inertiaTensorCylinder,
-    jointType='Pz',
-    parent=-1,
+    jointType='Pz',  # Prismatic joint along z-axis
+    parent=-1,  # Connected directly to base
     preHT=preHT_Cyl,
     visualization=visualisationCylinder,
     PDcontrol=(kp_trans, kd_trans)
 ))
-robot.AddLink(
-    robotLink=RobotLink(
+
+robot.AddLink(RobotLink(
     mass=m1,
     COM=joint1_pos,
     inertia=inertiaTensor1,
-    jointType='Rz',
-    parent=0,
+    jointType='Rz',  # Revolute joint around z-axis
+    parent=0,  # Child of cylinder (link 0)
     preHT=preHT_1,
     visualization=visualisationLink1,
     PDcontrol=(kp_rot, kd_rot)
 ))
-robot.AddLink(
-    robotLink=RobotLink(
+
+robot.AddLink(RobotLink(
     mass=m2,
     COM=joint2_pos,
     inertia=inertiaTensor2,
     jointType='Rz',
-    parent=1,
+    parent=1,  # Child of link 1
     preHT=preHT_2,
     visualization=visualisationLink2,
     PDcontrol=(kp_rot2, kd_rot2)
 ))
-robot.AddLink(
-    robotLink=RobotLink(
+
+robot.AddLink(RobotLink(
     mass=m3,
     COM=joint3_pos,
     inertia=inertiaTensor3,
     jointType='Rz',
-    parent=2,
+    parent=2,  # Child of link 2
     preHT=preHT_3,
     visualization=visualisationLink3,
-    PDcontrol=(0, 0)
+    PDcontrol=(0, 0)  # No PD control for last link
 ))
 
+# ========================================
+# SYSTEM SETUP
+# ========================================
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
+
+# Create kinematic tree for the robot
 robotDict = robot.CreateKinematicTree(
     mbs=mbs,
     name="WHR"
@@ -78,327 +92,376 @@ robotDict = robot.CreateKinematicTree(
 oKT = robotDict['objectKinematicTree']
 nodeNumber = mbs.GetObject(oKT)['nodeNumber']
 
+# Add coordinate connector constraint
 mJoint2 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=0, coordinate=2))
 mJoint3 = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=0, coordinate=3))
 
-factorValue1 = -0.5
-
 mbs.AddObject(ObjectConnectorCoordinate(
     markerNumbers=[mJoint3, mJoint2],
-    factorValue1=factorValue1,
+    factorValue1=-0.5,
 ))
 
-jointList = [0]*robot.NumberOfLinks()
-
+# ========================================
+# TRAJECTORY DEFINITION
+# ========================================
 robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=0)
 
-def ComputeMBSstaticRobotTorques(robot):
-    q = mbs.GetObjectOutputBody(oKT, exu.OutputVariableType.Coordinates, localPosition=[0,0,0])
-    HT=robot.JointHT(q)
-    return robot.StaticTorques(HT)
+# Define waypoints for the trajectory
+q1 = [0.1, -0.5 * np.pi, 0.3 * np.pi, 0]
+q2 = [0.2, 0.5 * np.pi, -0.3 * np.pi, 0]
+q3 = [0.1, -0.5 * np.pi, -0.1 * np.pi, 0]
+q4 = [0.3, -0.3 * np.pi, -0.4 * np.pi, 0]
+q5 = [0, 0, 0, 0]
 
+# Add motion profiles with constant acceleration
+robotTrajectory.Add(ProfileConstantAcceleration(q1, 2))
+robotTrajectory.Add(ProfileConstantAcceleration(q2, 2))
+robotTrajectory.Add(ProfileConstantAcceleration(q3, 2))
+robotTrajectory.Add(ProfileConstantAcceleration(q4, 2))
+robotTrajectory.Add(ProfileConstantAcceleration(q5, 2))
 
+# ========================================
+# SENSORS
+# ========================================
+output_dir = "sensor_outputs"
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+# Vertical motion sensors (cylinder - Pz joint)
+verticalDispSens = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=0,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.Displacement,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "verticalDisp.txt"),
+    name="verticalDisp"
+))
+
+verticalVelSens = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=0,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.VelocityLocal,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "verticalVel.txt"),
+    name="verticalVel"
+))
+
+verticalAccSens = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=0,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.AccelerationLocal,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "verticalAcc.txt"),
+    name="verticalAcc"
+))
+
+# Joint 1 sensors (Rz)
+theta1Sensor = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=1,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.Rotation,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "theta1_deg.txt"),
+    name="theta1_deg"
+))
+
+omega1Sensor = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=1,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.AngularVelocityLocal,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "omega1_deg.txt"),
+    name="omega1_deg"
+))
+
+epsilon1Sensor = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=1,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.AngularAccelerationLocal,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "epsilon1_deg.txt"),
+    name="epsilon1_deg"
+))
+
+# Joint 2 sensors (Rz)
+theta2Sensor = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=2,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.Rotation,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "theta2_deg.txt"),
+    name="theta2_deg"
+))
+
+omega2Sensor = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=2,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.AngularVelocityLocal,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "omega2_deg.txt"),
+    name="omega2_deg"
+))
+
+epsilon2Sensor = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=2,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.AngularAccelerationLocal,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "epsilon2_deg.txt"),
+    name="epsilon2_deg"
+))
+
+# Joint 3 sensors (Rz)
+theta3Sensor = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=3,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.Rotation,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "theta3_deg.txt"),
+    name="theta3_deg"
+))
+
+omega3Sensor = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=3,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.AngularVelocityLocal,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "omega3_deg.txt"),
+    name="omega3_deg"
+))
+
+epsilon3Sensor = mbs.AddSensor(SensorKinematicTree(
+    objectNumber=oKT,
+    linkNumber=3,
+    localPosition=[0, 0, 0],
+    outputVariableType=exu.OutputVariableType.AngularAccelerationLocal,
+    storeInternal=True,
+    writeToFile=True,
+    fileName=os.path.join(output_dir, "epsilon3_deg.txt"),
+    name="epsilon3_deg"
+))
+
+# ========================================
+# HELPER FUNCTIONS
+# ========================================
 torque_values = []
-mass_matrix_debug = []
+
 
 def joint_motion_subspace(joint_type):
-    if joint_type == 'Px': return np.array([0,0,0,1,0,0])
-    if joint_type == 'Py': return np.array([0,0,0,0,1,0])
-    if joint_type == 'Pz': return np.array([0,0,0,0,0,1])
-    if joint_type == 'Rx': return np.array([1,0,0,0,0,0])
-    if joint_type == 'Ry': return np.array([0,1,0,0,0,0])
-    if joint_type == 'Rz': return np.array([0,0,1,0,0,0])
+    """Convert joint type to 6D motion subspace vector"""
+    if joint_type == 'Px': return np.array([0, 0, 0, 1, 0, 0])
+    if joint_type == 'Py': return np.array([0, 0, 0, 0, 1, 0])
+    if joint_type == 'Pz': return np.array([0, 0, 0, 0, 0, 1])
+    if joint_type == 'Rx': return np.array([1, 0, 0, 0, 0, 0])
+    if joint_type == 'Ry': return np.array([0, 1, 0, 0, 0, 0])
+    if joint_type == 'Rz': return np.array([0, 0, 1, 0, 0, 0])
     raise ValueError(f"Unknown joint type: {joint_type}")
 
+
 def skew(v):
+    """Create skew-symmetric matrix from 3D vector"""
     return np.array([[0, -v[2], v[1]],
                      [v[2], 0, -v[0]],
                      [-v[1], v[0], 0]])
 
 
 def RNEA(q, q_t, q_tt, mbs, oKT, robot, g):
-    # Number of links (including base if present)
-    N_B = robot.NumberOfLinks()
-    v = np.zeros((N_B, 6))      # spatial velocity: [omega(3); v(3)]
-    a = np.zeros((N_B, 6))      # spatial acceleration: [alpha(3); a(3)]
-    f = np.zeros((N_B, 6))      # spatial force: [moment(3); force(3)]
-    tau = np.zeros(N_B)         # joint torques/forces
+    """
+    Recursive Newton-Euler Algorithm for computing joint torques/forces.
 
-    # Get parameters from ObjectKinematicTree
+    This algorithm calculates the required joint torques/forces to achieve
+    a specified motion considering robot dynamics including gravity,
+    Coriolis, and centrifugal effects.
+
+    Parameters:
+    -----------
+    q : array - Current joint positions
+    q_t : array - Current joint velocities
+    q_tt : array - Current joint accelerations
+    mbs : object - Multibody system object
+    oKT : int - Object number of kinematic tree
+    robot : Robot - Robot object
+    g : array - Gravity vector [gx, gy, gz]
+
+    Returns:
+    --------
+    tau : array - Required joint torques/forces
+    """
+
+    # Ensure all inputs are numpy arrays
+    q = np.array(q)
+    q_t = np.array(q_t)
+    q_tt = np.array(q_tt)
+    g = np.array(g)
+
+    n_joints = len(q)
+    N_B = robot.NumberOfLinks()
+
+    # Initialize spatial motion arrays
+    v = [np.zeros(6) for _ in range(N_B)]  # velocities
+    a = [np.zeros(6) for _ in range(N_B)]  # accelerations
+    f = [np.zeros(6) for _ in range(N_B)]  # forces
+
+    # Get robot parameters from kinematic tree
     link_parents = mbs.GetObjectParameter(oKT, 'linkParents')
     link_masses = mbs.GetObjectParameter(oKT, 'linkMasses')
     link_inertias = mbs.GetObjectParameter(oKT, 'linkInertiasCOM')
 
-    # Forward pass: compute spatial velocities and accelerations
+    # Precompute all homogeneous transformations
+    HT_all = robot.JointHT(q)
+
+    # === FORWARD PASS: Compute velocities and accelerations ===
     for i in range(N_B):
-        # get parent spatial state (if any)
         parent = link_parents[i]
+
+        # Inherit parent's motion state if exists
         if parent != -1:
-            a[i][3:] = -g
             v[i] = v[parent].copy()
-        else:
-            v[i] = np.zeros(6)
-
-        # add joint contribution to velocity
-        if i > 0:
-            phi = joint_motion_subspace(robot.links[i].jointType)  # 6-vector
-            v[i] += phi * q_t[i]
-
-        # accelerations: start from parent
-        if parent != -1:
             a[i] = a[parent].copy()
         else:
-            a[i] = np.zeros(6)
-            a[i][3:] = -g  # ensure gravity on base
+            # Base link: apply gravity
+            a[i][3:] = -g
 
-        # add joint contributions to acceleration
-        if i > 0:
-            phi = joint_motion_subspace(robot.links[i].jointType)
-            # angular part: alpha contribution; plus coriolis-like term phi x (omega * qdot)
-            # here phi[:3] are angular components, phi[3:] linear components
-            a[i][:3] += phi[:3] * q_tt[i] + np.cross(v[i][:3], phi[:3] * q_t[i])
-            a[i][3:] += phi[3:] * q_tt[i] + np.cross(v[i][:3], phi[3:] * q_t[i])
+        # Add joint contribution
+        joint_type = robot.links[i].jointType
+        phi = joint_motion_subspace(joint_type)
 
-        # spatial inertia * spatial acceleration -> spatial force
-        # approximate rotational moment = I * alpha (link_inertias are 3x3 for COM)
+        v[i] += phi * q_t[i]
+        a[i][:3] += phi[:3] * q_tt[i] + np.cross(v[i][:3], phi[:3] * q_t[i])
+        a[i][3:] += phi[3:] * q_tt[i] + np.cross(v[i][:3], phi[3:] * q_t[i])
+
+    # === BACKWARD PASS: Compute forces and joint torques ===
+    tau = np.zeros(n_joints)
+
+    for i in range(N_B - 1, -1, -1):
+        # Calculate spatial force for link i
         omega = v[i][:3]
         alpha = a[i][:3]
-        moment = link_inertias[i].dot(alpha) + np.cross(omega, link_inertias[i].dot(omega))
-        force  = link_masses[i] * a[i][3:]
+        mass = link_masses[i]
+        inertia = link_inertias[i]
+
+        moment = inertia.dot(alpha) + np.cross(omega, inertia.dot(omega))
+        force = mass * a[i][3:]
         f[i] = np.hstack((moment, force))
 
-    # Backward pass: propagate forces and compute joint torques
-    for i in range(N_B - 1, -1, -1):
+        # Propagate force to parent
         if i > 0:
-            phi = joint_motion_subspace(robot.links[i].jointType)
-            tau[i] = phi.dot(f[i])
-        else:
-            tau[i] = 0.0
+            parent = link_parents[i]
+            if parent != -1:
+                HT_parent_to_i = np.linalg.inv(HT_all[parent]) @ HT_all[i]
+                R = HT_parent_to_i[:3, :3]
+                p = HT_parent_to_i[:3, 3]
 
-        parent = link_parents[i]
-        if parent != -1:
-            HT_parent_to_i = np.linalg.inv(robot.JointHT(q)[parent]) @ robot.JointHT(q)[
-                i]  # transform from child to parent frame
-            R = HT_parent_to_i[:3, :3]
-            p = HT_parent_to_i[:3, 3]
-            X_wrench = np.block([
-                [R, skew(p) @ R],
-                [np.zeros((3, 3)), R]
-            ])
-            f[parent] += X_wrench @ f[i]
+                X = np.block([
+                    [R, skew(p) @ R],
+                    [np.zeros((3, 3)), R]
+                ])
+
+                f[parent] += X.T @ f[i]
+
+        # Calculate joint torque/force
+        joint_type = robot.links[i].jointType
+        phi = joint_motion_subspace(joint_type)
+        tau[i] = phi.dot(f[i])
 
     return tau
 
+
+# Pre-step user function for dynamic control
 def PreStepUF(mbs, t):
     if useKT:
+        # Get current joint coordinates
         q = mbs.GetObjectOutputBody(oKT, exu.OutputVariableType.Coordinates, [0, 0, 0])
+
+        # Evaluate desired trajectory
         u, v, a = robotTrajectory.Evaluate(t)
-        q_t = v
-        q_tt = a
-        torques = RNEA(q, q_t, q_tt, mbs, oKT, robot, g)
+
+        # Compute required torques using RNEA
+        torques = RNEA(q, v, a, mbs, oKT, robot, g)
+
+        # Apply control inputs to kinematic tree
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
         mbs.SetObjectParameter(oKT, 'jointForceVector', torques)
-        torque_values.append(torques)
+
+        # Store torque values for analysis
+        torque_values.append(torques.copy())
+
     return True
+
 
 mbs.SetPreStepUserFunction(PreStepUF)
 
-q1 = [0.1, -0.5 * pi, 0.3 * pi, 0]
-q2 = [0.2, 0.5* pi, -0.3 * pi, 0]
-q3 = [0.1, -0.5 * pi, -0.1 * pi, 0]
-q4 = [0.3, -0.3 * pi, -0.4 * pi, 0]
-q5 = [0, 0, 0, 0]
-
-robotTrajectory.Add(ProfileConstantAcceleration(q1,2))
-robotTrajectory.Add(ProfileConstantAcceleration(q2,2))
-robotTrajectory.Add(ProfileConstantAcceleration(q3,2))
-robotTrajectory.Add(ProfileConstantAcceleration(q4,2))
-robotTrajectory.Add(ProfileConstantAcceleration(q5,2))
-
-
-output_dir = "sensor_outputs"
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-
-
-verticalDispSens = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 0,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.Displacement,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "verticalDisp.txt"),
-        name = "verticalDisp"
-    )
-)
-verticalVelSens = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 0,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.VelocityLocal,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "verticalVel.txt"),
-        name = "verticalVel"
-    )
-)
-verticalAccSens = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 0,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.AccelerationLocal,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "verticalAcc.txt"),
-        name = "verticalAcc"
-    )
-)
-theta1Sensor = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 1,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.Rotation,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "theta1_deg.txt"),
-        name = "theta1_deg"
-    )
-)
-omega1Sensor = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 1,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.AngularVelocityLocal,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "omega1_deg.txt"),
-        name = "omega1_deg"
-    )
-)
-epsilon1Sensor = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 1,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.AngularAccelerationLocal,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "epsilon1_deg.txt"),
-        name = "epsilon1_deg"
-    )
-)
-theta2Sensor = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 2,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.Rotation,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "theta2_deg.txt"),
-        name = "theta2_deg",
-    )
-)
-omega2Sensor = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 2,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.AngularVelocityLocal,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "omega2_deg.txt"),
-        name = "omega2_deg"
-    )
-)
-epsilon2Sensor = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 2,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.AngularAccelerationLocal,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "epsilon2_deg.txt"),
-        name = "epsilon2_deg"
-    )
-)
-theta3Sensor = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 3,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.Rotation,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "theta3_deg.txt"),
-        name = "theta3_deg"
-    )
-)
-omega3Sensor = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 3,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.AngularVelocityLocal,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "omega3_deg.txt"),
-        name = "omega3_deg"
-    )
-)
-epsilon3Sensor = mbs.AddSensor(
-    SensorKinematicTree(
-        objectNumber = oKT,
-        linkNumber = 3,
-        localPosition = [0,0,0],
-        outputVariableType = exu.OutputVariableType.AngularAccelerationLocal,
-        storeInternal = True,
-        writeToFile = True,
-        fileName = os.path.join(output_dir, "epsilon3_deg.txt"),
-        name = "epsilon3_deg"
-    )
-)
+# ========================================
+# SIMULATION SETUP
+# ========================================
 mbs.Assemble()
 
-simulationSettings = exu.SimulationSettings() #takes currently set values or default values
+simulationSettings = exu.SimulationSettings()
 
-tEnd = 10 #simulation time
-h = 0.25*1e-3 #step size
+# Time integration settings
+tEnd = 10  # Simulation time [s]
+h = 0.25e-3  # Step size [s]
 
-simulationSettings.timeIntegration.numberOfSteps = int(tEnd/h)
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
-simulationSettings.solutionSettings.solutionWritePeriod = 0.005 #store every 5 ms
-simulationSettings.solutionSettings.sensorsWritePeriod  = 0.005
 
-SC.visualizationSettings.window.renderWindowSize=(1600,1200)
+# Output settings
+simulationSettings.solutionSettings.solutionWritePeriod = 0.005  # 5 ms
+simulationSettings.solutionSettings.sensorsWritePeriod = 0.005
+
+# Visualization settings
+SC.visualizationSettings.window.renderWindowSize = (1600, 1200)
 SC.visualizationSettings.openGL.multiSampling = 4
 SC.visualizationSettings.general.autoFitScene = False
-SC.visualizationSettings.nodes.drawNodesAsPoint=False
-SC.visualizationSettings.nodes.showBasis=True
-SC.visualizationSettings.general.drawWorldBasis=True
+SC.visualizationSettings.nodes.drawNodesAsPoint = False
+SC.visualizationSettings.nodes.showBasis = True
+SC.visualizationSettings.general.drawWorldBasis = True
 SC.visualizationSettings.bodies.kinematicTree.showJointFrames = False
-SC.visualizationSettings.openGL.multiSampling=4
 SC.visualizationSettings.openGL.lineWidth = 2
-SC.visualizationSettings.openGL.light0position=(-6,2,12,0)
+SC.visualizationSettings.openGL.light0position = (-6, 2, 12, 0)
 
+# Start renderer
 SC.renderer.Start()
-if 'renderState' in exu.sys: #reload old view
+if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
 
-mbs.WaitForUserToContinue() #stop before simulating
-mbs.SolveDynamic(simulationSettings = simulationSettings,
-                  solverType=exu.DynamicSolverType.TrapezoidalIndex2)
+# Wait for user input before starting simulation
+mbs.WaitForUserToContinue()
 
-# Data for building plots
+# Run dynamic simulation
+mbs.SolveDynamic(
+    simulationSettings=simulationSettings,
+    solverType=exu.DynamicSolverType.TrapezoidalIndex2
+)
+
+# ========================================
+# DATA PROCESSING AND PLOTTING
+# ========================================
+# Load sensor data
 verticalDisp_data = mbs.GetSensorStoredData(verticalDispSens)
 theta1_data = mbs.GetSensorStoredData(theta1Sensor)
 theta2_data = mbs.GetSensorStoredData(theta2Sensor)
@@ -414,32 +477,29 @@ epsilon1_data = mbs.GetSensorStoredData(epsilon1Sensor)
 epsilon2_data = mbs.GetSensorStoredData(epsilon2Sensor)
 epsilon3_data = mbs.GetSensorStoredData(epsilon3Sensor)
 
-# Get solution times and initialize ideal trajectory arrays
+# Extract time vector
 times = theta1_data[:, 0]
-# Extract actual sensor data
+
+# Extract actual sensor data (relative angles)
 verticalDisp = verticalDisp_data[:, 3]  # z-component
-theta1 = theta1_data[:, 3]  # rotation z-component (in radians)
-theta2 = theta2_data[:, 3] - theta1  # rotation z-component (in radians)
-theta3 = theta3_data[:, 3] - theta2 - theta1  # rotation z-component (in radians)
+theta1 = theta1_data[:, 3]
+theta2 = theta2_data[:, 3] - theta1
+theta3 = theta3_data[:, 3] - theta2 - theta1
 
-verticalVel = verticalVel_data[:, 3]  # z-velocity
-omega1 = omega1_data[:, 3]  # angular velocity z-component (in rad/s)
-omega2 = omega2_data[:, 3] - omega1  # angular velocity z-component (in rad/s)
-omega3 = omega3_data[:, 3] - omega2 - omega1 # angular velocity z-component (in rad/s)
+verticalVel = verticalVel_data[:, 3]
+omega1 = omega1_data[:, 3]
+omega2 = omega2_data[:, 3] - omega1
+omega3 = omega3_data[:, 3] - omega2 - omega1
 
-verticalAcc = verticalAcc_data[:, 3]
-epsilon1 = epsilon1_data[:, 3]
-epsilon2 = epsilon2_data[:, 3] - epsilon1_data[:, 3]
-epsilon3 = epsilon3_data[:, 3] - epsilon1_data[:, 3] - epsilon2_data[:, 3]
-
+# Calculate accelerations via numerical differentiation
 verticalAcc_calc = np.gradient(verticalVel, times)
 epsilon1_calc = np.gradient(omega1, times)
 epsilon2_calc = np.gradient(omega2, times)
 epsilon3_calc = np.gradient(omega3, times)
 
-# Calculate ideal trajectory values
+# Generate ideal trajectory data
 n = len(times)
-ideal_positions = np.zeros((n, 4))  # [vertical, theta1, theta2, theta3]
+ideal_positions = np.zeros((n, 4))
 ideal_velocities = np.zeros((n, 4))
 ideal_accelerations = np.zeros((n, 4))
 
@@ -449,18 +509,17 @@ for i, t in enumerate(times):
     ideal_velocities[i] = v
     ideal_accelerations[i] = a
 
-
-# Calculate initial offset for vertical position
-z0 = verticalDisp_data[0, 3]  # initial z-position
+# Adjust ideal vertical position to match initial condition
+z0 = verticalDisp_data[0, 3]
 ideal_vertical_position = z0 + ideal_positions[:, 0]
 
-# ===========================
-# MAIN PLOT (3x4 grid)
-# ===========================
+# ========================================
+# MAIN PLOTS
+# ========================================
+# 3x4 grid of sensor data
 plt.figure(figsize=(20, 15))
 
-# Position plots (row 1)
-# Vertical position
+# Position plots
 plt.subplot(3, 4, 1)
 plt.plot(times, verticalDisp, 'b-', label='Actual')
 plt.plot(times, ideal_vertical_position, 'r--', label='Ideal')
@@ -468,7 +527,6 @@ plt.title('Vertical Position (m)')
 plt.legend()
 plt.grid()
 
-# Theta1
 plt.subplot(3, 4, 2)
 plt.plot(times, theta1, 'b-', label='Actual')
 plt.plot(times, ideal_positions[:, 1], 'r--', label='Ideal')
@@ -476,7 +534,6 @@ plt.title('Theta1 (rad)')
 plt.legend()
 plt.grid()
 
-# Theta2
 plt.subplot(3, 4, 3)
 plt.plot(times, theta2, 'b-', label='Actual')
 plt.plot(times, ideal_positions[:, 2], 'r--', label='Ideal')
@@ -484,15 +541,14 @@ plt.title('Theta2 (rad)')
 plt.legend()
 plt.grid()
 
-# Theta3
 plt.subplot(3, 4, 4)
 plt.plot(times, theta3, 'b-', label='Actual')
+plt.plot(times, ideal_positions[:, 3], 'r--', label='Ideal')
 plt.title('Theta3 (rad)')
 plt.legend()
 plt.grid()
 
-# Velocity plots (row 2)
-# Vertical velocity
+# Velocity plots
 plt.subplot(3, 4, 5)
 plt.plot(times, verticalVel, 'b-', label='Actual')
 plt.plot(times, ideal_velocities[:, 0], 'r--', label='Ideal')
@@ -500,7 +556,6 @@ plt.title('Vertical Velocity (m/s)')
 plt.legend()
 plt.grid()
 
-# Omega1
 plt.subplot(3, 4, 6)
 plt.plot(times, omega1, 'b-', label='Actual')
 plt.plot(times, ideal_velocities[:, 1], 'r--', label='Ideal')
@@ -508,7 +563,6 @@ plt.title('Omega1 (rad/s)')
 plt.legend()
 plt.grid()
 
-# Omega2
 plt.subplot(3, 4, 7)
 plt.plot(times, omega2, 'b-', label='Actual')
 plt.plot(times, ideal_velocities[:, 2], 'r--', label='Ideal')
@@ -516,14 +570,14 @@ plt.title('Omega2 (rad/s)')
 plt.legend()
 plt.grid()
 
-# Omega3
 plt.subplot(3, 4, 8)
 plt.plot(times, omega3, 'b-', label='Actual')
+plt.plot(times, ideal_velocities[:, 3], 'r--', label='Ideal')
 plt.title('Omega3 (rad/s)')
 plt.legend()
 plt.grid()
 
-# Acceleration plots (row 3) - unchanged
+# Acceleration plots
 plt.subplot(3, 4, 9)
 plt.plot(times, verticalAcc_calc, 'b-', label='Calculated')
 plt.plot(times, ideal_accelerations[:, 0], 'r--', label='Ideal')
@@ -534,7 +588,6 @@ plt.grid()
 plt.subplot(3, 4, 10)
 plt.plot(times, epsilon1_calc, 'b-', label='Calculated')
 plt.plot(times, ideal_accelerations[:, 1], 'r--', label='Ideal')
-# plt.plot(times, epsilon1, 'r-', label='Sensor')
 plt.title('Epsilon1 (rad/s²)')
 plt.legend()
 plt.grid()
@@ -542,28 +595,27 @@ plt.grid()
 plt.subplot(3, 4, 11)
 plt.plot(times, epsilon2_calc, 'b-', label='Calculated')
 plt.plot(times, ideal_accelerations[:, 2], 'r--', label='Ideal')
-# plt.plot(times, epsilon2, 'r-', label='Sensor')
 plt.title('Epsilon2 (rad/s²)')
 plt.legend()
 plt.grid()
 
 plt.subplot(3, 4, 12)
 plt.plot(times, epsilon3_calc, 'b-', label='Calculated')
-# plt.plot(times, epsilon3, 'r-', label='Sensor')
+plt.plot(times, ideal_accelerations[:, 3], 'r--', label='Ideal')
 plt.title('Epsilon3 (rad/s²)')
 plt.legend()
 plt.grid()
 
 plt.tight_layout(pad=2.0)
-plt.savefig('all_sensors_data_with_ideal.png')
+plt.savefig('all_sensors_data_with_ideal.png', dpi=300)
 plt.close()
 
-# =================================
-# ERROR PLOTS (vertical, theta1, theta2)
-# =================================
+# ========================================
+# ERROR PLOTS
+# ========================================
 plt.figure(figsize=(15, 15))
 
-# Position errors (row 1)
+# Position errors
 plt.subplot(3, 4, 1)
 plt.plot(times, ideal_vertical_position - verticalDisp)
 plt.title('Vertical Position Error')
@@ -582,7 +634,7 @@ plt.title('Theta2 Error')
 plt.ylabel('Error (rad)')
 plt.grid()
 
-# Velocity errors (row 2)
+# Velocity errors
 plt.subplot(3, 4, 5)
 plt.plot(times, ideal_velocities[:, 0] - verticalVel)
 plt.title('Vertical Velocity Error')
@@ -601,8 +653,7 @@ plt.title('Omega2 Error')
 plt.ylabel('Error (rad/s)')
 plt.grid()
 
-
-# Acceleration errors (row 3)
+# Acceleration errors
 plt.subplot(3, 4, 9)
 plt.plot(times, ideal_accelerations[:, 0] - verticalAcc_calc)
 plt.title('Vertical Acceleration Error')
@@ -624,47 +675,51 @@ plt.ylabel('Error (rad/s²)')
 plt.xlabel('Time (s)')
 plt.grid()
 
-
-plt.savefig('all_errors.png')
+plt.savefig('all_errors.png', dpi=300)
 plt.close()
 
-# =================================
-# FORCE AND TORQUE PLOTS (cylinder, link1, link2, link3)
-# =================================
+# ========================================
+# TORQUE PLOTS
+# ========================================
+# Convert torque_values list to numpy array
+torques = np.array(torque_values)
+
+# Create proper time vector for torque data
+# Since torque_values is recorded at every simulation step
+torque_times = np.linspace(0, tEnd, len(torques))
+
+# Save torque data
 with open("sensor_outputs/Torques.txt", "w") as f:
     for tau in torque_values:
         f.write(str(tau) + "\n")
 
-with open('sensor_outputs/Torques.txt', 'r') as file:
-    data = file.readlines()
+# Separate plot for cylinder force (Pz joint)
+plt.figure(figsize=(12, 6))
+plt.plot(torque_times, torques[:, 0], 'b-', linewidth=2.5, label='Cylinder Force')
+plt.title('Cylinder Actuation Force (Pz joint)', fontsize=14)
+plt.xlabel('Time (s)', fontsize=12)
+plt.ylabel('Force (N)', fontsize=12)
+plt.legend(fontsize=12)
+plt.grid(True, alpha=0.7)
+plt.tight_layout()
+plt.savefig('cylinder_force.png', dpi=300)
+plt.close()
 
-torques = []
-for line in data:
-    if line.strip():  # Пропуск пустых строк
-        row = np.fromstring(line.strip('[]\n'), sep=' ')
-        torques.append(row)
-torques = np.array(torques)
-
-time = np.arange(len(torques))
-
+# Combined torque plot
 plt.figure(figsize=(12, 8))
-plt.plot(time, torques[:, 0], label='Cylinder')
-plt.plot(time, torques[:, 1], label='Link 1')
-plt.plot(time, torques[:, 2], label='Link 2')
-plt.plot(time, torques[:, 3], label='Link 3')
+plt.plot(torque_times, torques[:, 1], label='Link 1 (Rz)')
+plt.plot(torque_times, torques[:, 2], label='Link 2 (Rz)')
+plt.plot(torque_times, torques[:, 3], label='Link 3 (Rz)')
 
-plt.title('Force and Torques in Links')
-plt.xlabel('Time (steps)')
-plt.ylabel('Torque (N·m)')
+plt.title('Joint Actuation Torques', fontsize=14)
+plt.xlabel('Time (s)', fontsize=12)
+plt.ylabel('Torque (N·m)', fontsize=12)
 plt.legend()
-plt.grid(True)
-
+plt.grid(True, alpha=0.7)
+plt.tight_layout()
+plt.savefig('all_torques.png', dpi=300)
 plt.show()
 
-# Saving mass matrix for debugging
-with open("sensor_outputs/MassMatrix.txt", "w") as f:
-    for m in mass_matrix_debug:
-        f.write(str(m) + "\n")
-
+# Cleanup
 exu.StopRenderer()
 mbs.SolutionViewer()
