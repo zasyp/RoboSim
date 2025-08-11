@@ -1,17 +1,29 @@
-## Waffer handling robot simulation written in Python framework exudyn
-
-This script simulates a robotic manipulator with a kinematic tree using the EXUDYN library. It defines a 4-link robot with a base, cylindrical link, and three rotational links, controlled via a predefined trajectory.
-
-Robot Definition: Configures a robot with a base and four links (1 prismatic, 3 revolute joints).
-Trajectory Control: Implements a trajectory with constant acceleration profiles for joint movements.
-Visualization: Includes graphical representations for the base and links (box, cylinder, custom bodies).
-Sensors: Tracks joint displacement and rotation.
-Simulation: Runs a dynamic simulation with a trapezoidal index-2 solver.
-
-The script uses a kinematic tree (ObjectKinematicTree) for robot dynamics.
-Trajectory points are defined in q1 to q5 with constant acceleration profiles.
-
-## Usage
-Ensure all required constants are defined in helpful.constants.
-Run the script to simulate the robot's motion over 6 seconds with a 0.25ms step size.
-Visualize results using the EXUDYN SolutionViewer.
+## Wafer Handling Robot Simulation in Python (Exudyn)
+![animation](https://github.com/user-attachments/assets/1e855364-8909-4ac7-be5f-1b404086c368)
+---
+This project demonstrates the simulation of a wafer handling robot manipulator using the [Exudyn](https://exudyn.readthedocs.io/) multibody dynamics library.
+The robot is modeled as a kinematic tree (`ObjectKinematicTree`) with a prismatic vertical axis and three rotational joints for planar motion.
+* **Robot Definition**
+Robot defined by robotics.Robot class. Base tool and four links with masses, inertias and simple STL format 3D models that you can find in graphics directory. All the physical constants can be modified in helpful.constants.py file.
+* **Trajectory Control**
+ At this point trajectory is realised by exudyn built in functions. You can define motion pattern by setting joint despositions (forward kinematics).
+---
+### **Installation**
+1. Install Python 3.9+ (recommended).
+2. Install required packages:
+   ```bash
+   pip install exudyn numpy matplotlib
+   ```
+3. Clone or download this repository.
+---
+### **Usage**
+There are two directories MBS realisation and robotics realisation. MBS defines robot in simple exudyn multybody objects, robotics use exudyn.robotics module. Robotics are prefferable.
+Run the main simulation script (roboticsForward.py or knFWhypotesys.py):
+   ```bash
+   python knFWhypotesys.py
+   ```
+### **Output**
+* Animated simulation in the Exudyn window.
+* Logged joint motion data for further processing.
+* Graphical visualizations of position, velocity, and control error.
+* Torque and forces plots.
