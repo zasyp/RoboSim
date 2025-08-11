@@ -1,9 +1,8 @@
 ## Wafer Handling Robot Simulation in Python (Exudyn)
 ![animation](https://github.com/user-attachments/assets/1e855364-8909-4ac7-be5f-1b404086c368)
-
+---
 This project demonstrates the simulation of a wafer handling robot manipulator using the [Exudyn](https://exudyn.readthedocs.io/) multibody dynamics library.
 The robot is modeled as a kinematic tree (`ObjectKinematicTree`) with a prismatic vertical axis and three rotational joints for planar motion.
----
 ### **Features**
 * **Robot Definition**
   * Base + 4 links:
