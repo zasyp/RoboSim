@@ -49,11 +49,3 @@ The robot is modeled as a kinematic tree (`ObjectKinematicTree`) with a prismati
 * Logged joint motion data for further processing.
 * Graphical visualizations of position, velocity, and control error.
 * Torque and forces plots.
----
-### **Applications**
-* Wafer handling robots in semiconductor manufacturing.
-* Educational purposes for learning multibody simulation in Python.
-* Testing control algorithms for multi-DOF robotic systems.
----
-### **References**
-* [Exudyn Documentation](https://exudyn.readthedocs.io/)
