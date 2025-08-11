@@ -1,5 +1,5 @@
 ## Waffer handling robot simulation written in Python framework exudyn
-
+https://github.com/user-attachments/assets/f5254741-99d3-4e21-9ba8-0a6bfa40289e
 This script simulates a robotic manipulator with a kinematic tree using the EXUDYN library. It defines a 4-link robot with a base, cylindrical link, and three rotational links, controlled via a predefined trajectory.
 
 Robot Definition: Configures a robot with a base and four links (1 prismatic, 3 revolute joints).
