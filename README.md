@@ -3,25 +3,10 @@
 ---
 This project demonstrates the simulation of a wafer handling robot manipulator using the [Exudyn](https://exudyn.readthedocs.io/) multibody dynamics library.
 The robot is modeled as a kinematic tree (`ObjectKinematicTree`) with a prismatic vertical axis and three rotational joints for planar motion.
-### **Features**
 * **Robot Definition**
-  * Base + 4 links:
-    * **1 prismatic joint** (vertical Z-axis)
-    * **3 revolute joints** (rotation around Z-axis)
-  * Physical parameters: link masses, inertia tensors, COM positions.
-  * Graphical models for base and links (box, cylinder, and custom STL shapes).
+Robot defined by robotics.Robot class. Base tool and four links with masses, inertias and simple STL format 3D models that you can find in graphics directory. All the physical constants can be modified in helpful.constants.py file.
 * **Trajectory Control**
-  * Motion defined using constant acceleration profiles (`ProfileConstantAcceleration`).
-  * Predefined joint positions `q1` to `q5`.
-  * PD control for joint movement.
-* **Sensors**
-  * Joint position, velocity, and acceleration tracking via `SensorKinematicTree`.
-  * Data logging for post-simulation analysis.
-* **Simulation**
-  * Time step: `h = 0.25 × 10⁻³ s`
-  * Duration: `6 s`
-  * Solver: **TrapezoidalIndex2** (implicit integration).
-  * Control implemented in `PreStepUserFunction`.
+ At this point trajectory is realised by exudyn built in functions. You can define motion pattern by setting joint despositions (forward kinematics).
 ---
 ### **Installation**
 1. Install Python 3.9+ (recommended).
@@ -32,18 +17,11 @@ The robot is modeled as a kinematic tree (`ObjectKinematicTree`) with a prismati
 3. Clone or download this repository.
 ---
 ### **Usage**
-1. Define constants and geometry in `helpful.constants`.
-2. There are two directories MBS realisation and robotics realisation. MBS defines robot in simple exudyn multybody objects, robotics use exudyn.robotics module. Robotics are prefferable.
-3. Run the main simulation script (roboticsForward.py or knFWhypotesys.py):
+There are two directories MBS realisation and robotics realisation. MBS defines robot in simple exudyn multybody objects, robotics use exudyn.robotics module. Robotics are prefferable.
+Run the main simulation script (roboticsForward.py or knFWhypotesys.py):
    ```bash
    python knFWhypotesys.py
    ```
-3. Use **Exudyn SolutionViewer** to visualize simulation results:
-   ```python
-   from exudyn.interactive import SolutionViewer
-   SolutionViewer(mbs, solutionFile)
-   ```
----
 ### **Output**
 * Animated simulation in the Exudyn window.
 * Logged joint motion data for further processing.
