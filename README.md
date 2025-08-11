@@ -4,7 +4,6 @@
 
 This project demonstrates the simulation of a wafer handling robot manipulator using the [Exudyn](https://exudyn.readthedocs.io/) multibody dynamics library.
 The robot is modeled as a kinematic tree (`ObjectKinematicTree`) with a prismatic vertical axis and three rotational joints for planar motion.
-
 ---
 
 ### **Features**
@@ -53,10 +52,11 @@ The robot is modeled as a kinematic tree (`ObjectKinematicTree`) with a prismati
 ### **Usage**
 
 1. Define constants and geometry in `helpful.constants`.
-2. Run the main simulation script:
+2. There are two directories MBS realisation and robotics realisation. MBS defines robot in simple exudyn multybody objects, robotics use exudyn.robotics module. Robotics are prefferable.
+3. Run the main simulation script (roboticsForward.py or knFWhypotesys.py):
 
    ```bash
-   python wafer_robot.py
+   python knFWhypotesys.py
    ```
 3. Use **Exudyn SolutionViewer** to visualize simulation results:
 
