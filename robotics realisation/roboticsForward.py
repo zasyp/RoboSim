@@ -603,14 +603,11 @@ def plot_accelerations_scatter(times,
 
 
 
-# === Вызов функции после вычисления ускорений ===
-# Сначала убедимся, что идеальные ускорения доступны
 ideal_vertical_acc = ideal_accelerations[:, 0]
 ideal_eps1 = ideal_accelerations[:, 1]
 ideal_eps2 = ideal_accelerations[:, 2]
 ideal_eps3 = ideal_accelerations[:, 3]
 
-# Вызов новой функции
 plot_accelerations_scatter(
     times,
     verticalAcc, ideal_vertical_acc,
