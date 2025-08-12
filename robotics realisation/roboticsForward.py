@@ -263,154 +263,29 @@ epsilon3Sensor = mbs.AddSensor(SensorKinematicTree(
     name="epsilon3_deg"
 ))
 
-# ========================================
-# HELPER FUNCTIONS
-# ========================================
+# ==========================================
+# PRE-STEP USER FUNCTION FOR DYNAMIC CONTROL
+# ==========================================
 torque_values = []
-
-
-def joint_motion_subspace(joint_type):
-    """Convert joint type to 6D motion subspace vector"""
-    if joint_type == 'Px': return np.array([0, 0, 0, 1, 0, 0])
-    if joint_type == 'Py': return np.array([0, 0, 0, 0, 1, 0])
-    if joint_type == 'Pz': return np.array([0, 0, 0, 0, 0, 1])
-    if joint_type == 'Rx': return np.array([1, 0, 0, 0, 0, 0])
-    if joint_type == 'Ry': return np.array([0, 1, 0, 0, 0, 0])
-    if joint_type == 'Rz': return np.array([0, 0, 1, 0, 0, 0])
-    raise ValueError(f"Unknown joint type: {joint_type}")
-
-
-def skew(v):
-    """Create skew-symmetric matrix from 3D vector"""
-    return np.array([[0, -v[2], v[1]],
-                     [v[2], 0, -v[0]],
-                     [-v[1], v[0], 0]])
-
-
-def RNEA(q, q_t, q_tt, mbs, oKT, robot, g):
-    """
-    Recursive Newton-Euler Algorithm for computing joint torques/forces.
-
-    This algorithm calculates the required joint torques/forces to achieve
-    a specified motion considering robot dynamics including gravity,
-    Coriolis, and centrifugal effects.
-
-    Parameters:
-    -----------
-    q : array - Current joint positions
-    q_t : array - Current joint velocities
-    q_tt : array - Current joint accelerations
-    mbs : object - Multibody system object
-    oKT : int - Object number of kinematic tree
-    robot : Robot - Robot object
-    g : array - Gravity vector [gx, gy, gz]
-
-    Returns:
-    --------
-    tau : array - Required joint torques/forces
-    """
-
-    # Ensure all inputs are numpy arrays
-    q = np.array(q)
-    q_t = np.array(q_t)
-    q_tt = np.array(q_tt)
-    g = np.array(g)
-
-    n_joints = len(q)
-    N_B = robot.NumberOfLinks()
-
-    # Initialize spatial motion arrays
-    v = [np.zeros(6) for _ in range(N_B)]  # velocities
-    a = [np.zeros(6) for _ in range(N_B)]  # accelerations
-    f = [np.zeros(6) for _ in range(N_B)]  # forces
-
-    # Get robot parameters from kinematic tree
-    link_parents = mbs.GetObjectParameter(oKT, 'linkParents')
-    link_masses = mbs.GetObjectParameter(oKT, 'linkMasses')
-    link_inertias = mbs.GetObjectParameter(oKT, 'linkInertiasCOM')
-
-    # Precompute all homogeneous transformations
-    HT_all = robot.JointHT(q)
-
-    # === FORWARD PASS: Compute velocities and accelerations ===
-    for i in range(N_B):
-        parent = link_parents[i]
-
-        # Inherit parent's motion state if exists
-        if parent != -1:
-            v[i] = v[parent].copy()
-            a[i] = a[parent].copy()
-        else:
-            # Base link: apply gravity
-            a[i][3:] = -g
-
-        # Add joint contribution
-        joint_type = robot.links[i].jointType
-        phi = joint_motion_subspace(joint_type)
-
-        v[i] += phi * q_t[i]
-        a[i][:3] += phi[:3] * q_tt[i] + np.cross(v[i][:3], phi[:3] * q_t[i])
-        a[i][3:] += phi[3:] * q_tt[i] + np.cross(v[i][:3], phi[3:] * q_t[i])
-
-    # === BACKWARD PASS: Compute forces and joint torques ===
-    tau = np.zeros(n_joints)
-
-    for i in range(N_B - 1, -1, -1):
-        # Calculate spatial force for link i
-        omega = v[i][:3]
-        alpha = a[i][:3]
-        mass = link_masses[i]
-        inertia = link_inertias[i]
-
-        moment = inertia.dot(alpha) + np.cross(omega, inertia.dot(omega))
-        force = mass * a[i][3:]
-        f[i] = np.hstack((moment, force))
-
-        # Propagate force to parent
-        if i > 0:
-            parent = link_parents[i]
-            if parent != -1:
-                HT_parent_to_i = np.linalg.inv(HT_all[parent]) @ HT_all[i]
-                R = HT_parent_to_i[:3, :3]
-                p = HT_parent_to_i[:3, 3]
-
-                X = np.block([
-                    [R, skew(p) @ R],
-                    [np.zeros((3, 3)), R]
-                ])
-
-                f[parent] += X.T @ f[i]
-
-        # Calculate joint torque/force
-        joint_type = robot.links[i].jointType
-        phi = joint_motion_subspace(joint_type)
-        tau[i] = phi.dot(f[i])
-
-    return tau
-
-
-# Pre-step user function for dynamic control
 def PreStepUF(mbs, t):
     if useKT:
-        # Get current joint coordinates
-        q = mbs.GetObjectOutputBody(oKT, exu.OutputVariableType.Coordinates, [0, 0, 0])
+        # Getting trajectory parameters
+        [u,v,a] = robotTrajectory.Evaluate(t)
 
-        # Evaluate desired trajectory
-        u, v, a = robotTrajectory.Evaluate(t)
+        # Calculating torques according to tau = M * ddq
+        HT = robot.JointHT(u)
+        jointJacs = JointJacobian(robot, HT, HT)
+        MM = MassMatrix(robot, HT, jointJacs)
+        dynamical = MM.dot(a)
+        torque_values.append(dynamical)
 
-        # Compute required torques using RNEA
-        torques = RNEA(q, v, a, mbs, oKT, robot, g)
-
-        # Apply control inputs to kinematic tree
+        # Setting system parameters
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
-        mbs.SetObjectParameter(oKT, 'jointForceVector', torques)
-
-        # Store torque values for analysis
-        torque_values.append(torques.copy())
-
+        mbs.SetObjectParameter(oKT, 'jointForceVector', dynamical)
     return True
 
+mbs.SetPreStepUserFunction(PreStepUF)
 
 mbs.SetPreStepUserFunction(PreStepUF)
 
