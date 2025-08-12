@@ -6,7 +6,6 @@ from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
 from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
 from exudyn.robotics.special import *
-from scipy.signal import savgol_filter
 from helpful.constants import *
 
 # ========================================
@@ -115,11 +114,11 @@ q4 = [0.3, -0.3 * np.pi, -0.4 * np.pi, 0]
 q5 = [0, 0, 0, 0]
 
 # Add motion profiles with constant acceleration
-robotTrajectory.Add(ProfileConstantAcceleration(q1, 2))
-robotTrajectory.Add(ProfileConstantAcceleration(q2, 2))
-robotTrajectory.Add(ProfileConstantAcceleration(q3, 2))
-robotTrajectory.Add(ProfileConstantAcceleration(q4, 2))
-robotTrajectory.Add(ProfileConstantAcceleration(q5, 2))
+robotTrajectory.Add(ProfileConstantAcceleration(q1, 1))
+robotTrajectory.Add(ProfileConstantAcceleration(q2, 1))
+robotTrajectory.Add(ProfileConstantAcceleration(q3, 1))
+robotTrajectory.Add(ProfileConstantAcceleration(q4, 1))
+robotTrajectory.Add(ProfileConstantAcceleration(q5, 1))
 
 # ========================================
 # SENSORS
@@ -128,7 +127,31 @@ output_dir = "sensor_outputs"
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
-# Vertical motion sensors (cylinder - Pz joint)
+# ==========================================
+# PRE-STEP USER FUNCTION FOR DYNAMIC CONTROL
+# ==========================================
+torque_values = []
+def PreStepUF(mbs, t):
+    if useKT:
+        # Getting trajectory parameters
+        [u,v,a] = robotTrajectory.Evaluate(t)
+
+        # Calculating torques according to tau = M * ddq
+        HT = robot.JointHT(u)
+        jointJacs = JointJacobian(robot, HT, HT)
+        MM = MassMatrix(robot, HT, jointJacs)
+        dynamical = MM.dot(a)
+        torque_values.append(dynamical)
+
+        # Setting system parameters
+        mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
+        mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
+        mbs.SetObjectParameter(oKT, 'jointForceVector', dynamical)
+    return True
+
+mbs.SetPreStepUserFunction(PreStepUF)
+
+# Motion sensors
 verticalDispSens = mbs.AddSensor(SensorKinematicTree(
     objectNumber=oKT,
     linkNumber=0,
@@ -264,32 +287,6 @@ epsilon3Sensor = mbs.AddSensor(SensorKinematicTree(
     name="epsilon3_deg"
 ))
 
-# ==========================================
-# PRE-STEP USER FUNCTION FOR DYNAMIC CONTROL
-# ==========================================
-torque_values = []
-def PreStepUF(mbs, t):
-    if useKT:
-        # Getting trajectory parameters
-        [u,v,a] = robotTrajectory.Evaluate(t)
-
-        # Calculating torques according to tau = M * ddq
-        HT = robot.JointHT(u)
-        jointJacs = JointJacobian(robot, HT, HT)
-        MM = MassMatrix(robot, HT, jointJacs)
-        dynamical = MM.dot(a)
-        torque_values.append(dynamical)
-
-        # Setting system parameters
-        mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
-        mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
-        mbs.SetObjectParameter(oKT, 'jointForceVector', dynamical)
-    return True
-
-mbs.SetPreStepUserFunction(PreStepUF)
-
-mbs.SetPreStepUserFunction(PreStepUF)
-
 # ========================================
 # SIMULATION SETUP
 # ========================================
@@ -298,7 +295,7 @@ mbs.Assemble()
 simulationSettings = exu.SimulationSettings()
 
 # Time integration settings
-tEnd = 10  # Simulation time [s]
+tEnd = 5  # Simulation time [s]
 h = 0.1e-3  # Step size [s]
 
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
@@ -368,22 +365,15 @@ omega2 = omega2_data[:, 3] - omega1
 omega3 = omega3_data[:, 3] - omega2 - omega1
 
 verticalAcc = verticalAcc_data[:, 3]
-epsilon1 = epsilon1_data[:, 3]
-epsilon2 = epsilon2_data[:, 3] - epsilon1
-epsilon3 = epsilon3_data[:, 3] - epsilon2 - epsilon1
+epsilon1 = epsilon1_data[:, 3] * 180/pi
+epsilon2 = epsilon2_data[:, 3] * 180/pi - epsilon1
+epsilon3 = epsilon3_data[:, 3] * 180/pi - epsilon2
 
 # Calculate accelerations via numerical differentiation
-verticalAcc = np.gradient(verticalVel, times)
-verticalAcc = savgol_filter(verticalAcc, 51, 3)
-
-epsilon1 = np.gradient(omega1, times)
-epsilon1 = savgol_filter(epsilon1, 51, 3)
-
-epsilon2 = np.gradient(omega2, times)
-epsilon2 = savgol_filter(epsilon2, 51, 3)
-
-epsilon3 = np.gradient(omega3, times)
-epsilon3 = savgol_filter(epsilon3, 51, 3)
+# verticalAcc = np.gradient(verticalVel, times)
+# epsilon1 = np.gradient(omega1, times)
+# epsilon2 = np.gradient(omega2, times)
+# epsilon3 = np.gradient(omega3, times)
 
 # Generate ideal trajectory data
 n = len(times)
@@ -432,7 +422,7 @@ def plot_all_results(times,
         plt.savefig(os.path.join(output_dir, filename), dpi=300)
         plt.close()
 
-    step = 20
+    step = 1
 
     # Positions
     save_plot(times, [verticalDisp, ideal_vertical_position],
