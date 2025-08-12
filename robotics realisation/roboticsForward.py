@@ -487,8 +487,6 @@ def plot_accelerations_scatter(times,
                  "Epsilon3 - Angular Acceleration Link 3 (Scatter)", "Angular Acceleration (rad/s²)",
                  "epsilon3_scatter.png")
 
-
-
 ideal_vertical_acc = ideal_accelerations[:, 0]
 ideal_eps1 = ideal_accelerations[:, 1]
 ideal_eps2 = ideal_accelerations[:, 2]
