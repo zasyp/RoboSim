@@ -6,6 +6,7 @@ from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
 from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
 from exudyn.robotics.special import *
+from scipy.signal import savgol_filter
 from helpful.constants import *
 
 # ========================================
@@ -366,11 +367,23 @@ omega1 = omega1_data[:, 3]
 omega2 = omega2_data[:, 3] - omega1
 omega3 = omega3_data[:, 3] - omega2 - omega1
 
+verticalAcc = verticalAcc_data[:, 3]
+epsilon1 = epsilon1_data[:, 3]
+epsilon2 = epsilon2_data[:, 3] - epsilon1
+epsilon3 = epsilon3_data[:, 3] - epsilon2 - epsilon1
+
 # Calculate accelerations via numerical differentiation
-verticalAcc_calc = np.gradient(verticalVel, times)
-epsilon1_calc = np.gradient(omega1, times)
-epsilon2_calc = np.gradient(omega2, times)
-epsilon3_calc = np.gradient(omega3, times)
+verticalAcc = np.gradient(verticalVel, times)
+verticalAcc = savgol_filter(verticalAcc, 51, 3)
+
+epsilon1 = np.gradient(omega1, times)
+epsilon1 = savgol_filter(epsilon1, 51, 3)
+
+epsilon2 = np.gradient(omega2, times)
+epsilon2 = savgol_filter(epsilon2, 51, 3)
+
+epsilon3 = np.gradient(omega3, times)
+epsilon3 = savgol_filter(epsilon3, 51, 3)
 
 # Generate ideal trajectory data
 n = len(times)
@@ -391,209 +404,123 @@ ideal_vertical_position = z0 + ideal_positions[:, 0]
 # ========================================
 # MAIN PLOTS
 # ========================================
-# 3x4 grid of sensor data
-plt.figure(figsize=(20, 15))
+def plot_all_results(times,
+                     verticalDisp, ideal_vertical_position,
+                     theta1, theta2, theta3, ideal_positions,
+                     verticalVel, omega1, omega2, omega3, ideal_velocities,
+                     verticalAcc, epsilon1, epsilon2, epsilon3, ideal_accelerations,
+                     torque_times, torques,
+                     output_dir="plots"):
+    os.makedirs(output_dir, exist_ok=True)
 
-# Position plots
-plt.subplot(3, 4, 1)
-plt.plot(times, verticalDisp, 'b-', label='Actual')
-plt.plot(times, ideal_vertical_position, 'r--', label='Ideal')
-plt.title('Vertical Position (m)')
-plt.legend()
-plt.grid()
+    torques = np.array(torques)
+    torque_times = np.linspace(0, 10, len(torques))
 
-plt.subplot(3, 4, 2)
-plt.plot(times, theta1, 'b-', label='Actual')
-plt.plot(times, ideal_positions[:, 1], 'r--', label='Ideal')
-plt.title('Theta1 (rad)')
-plt.legend()
-plt.grid()
+    def save_plot(x, y_list, labels, title, ylabel, filename, linestyles=None):
+        plt.figure(figsize=(8, 6))
+        for i, (y, label) in enumerate(zip(y_list, labels)):
+            if linestyles is not None and i < len(linestyles):
+                plt.plot(x, y, label=label, linestyle=linestyles[i])
+            else:
+                plt.plot(x, y, label=label)
+        plt.title(title)
+        plt.xlabel("Time (s)")
+        plt.ylabel(ylabel)
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, filename), dpi=300)
+        plt.close()
 
-plt.subplot(3, 4, 3)
-plt.plot(times, theta2, 'b-', label='Actual')
-plt.plot(times, ideal_positions[:, 2], 'r--', label='Ideal')
-plt.title('Theta2 (rad)')
-plt.legend()
-plt.grid()
+    step = 20
 
-plt.subplot(3, 4, 4)
-plt.plot(times, theta3, 'b-', label='Actual')
-plt.plot(times, ideal_positions[:, 3], 'r--', label='Ideal')
-plt.title('Theta3 (rad)')
-plt.legend()
-plt.grid()
+    # Positions
+    save_plot(times, [verticalDisp, ideal_vertical_position],
+              ["Simulated", "Ideal"], "Vertical Position", "Position (m)",
+              "vertical_position.png", linestyles=['-', '--'])
+    save_plot(times, [theta1, ideal_positions[:, 1]],
+              ["Simulated", "Ideal"], "Theta1", "Angle (rad)",
+              "theta1.png", linestyles=['-', '--'])
+    save_plot(times, [theta2, ideal_positions[:, 2]],
+              ["Simulated", "Ideal"], "Theta2", "Angle (rad)",
+              "theta2.png", linestyles=['-', '--'])
+    save_plot(times, [theta3], ["Simulated"], "Theta3", "Angle (rad)",
+              "theta3.png", linestyles=['-'])
 
-# Velocity plots
-plt.subplot(3, 4, 5)
-plt.plot(times, verticalVel, 'b-', label='Actual')
-plt.plot(times, ideal_velocities[:, 0], 'r--', label='Ideal')
-plt.title('Vertical Velocity (m/s)')
-plt.legend()
-plt.grid()
+    # Position error plots
+    save_plot(times, [ideal_vertical_position - verticalDisp],
+              ["Error"], "Vertical Position Error", "Error (m)",
+              "err_vertical_position.png")
+    save_plot(times, [ideal_positions[:, 1] - theta1],
+              ["Error"], "Theta1 Error", "Error (rad)",
+              "err_theta1.png")
+    save_plot(times, [ideal_positions[:, 2] - theta2],
+              ["Error"], "Theta2 Error", "Error (rad)",
+              "err_theta2.png")
 
-plt.subplot(3, 4, 6)
-plt.plot(times, omega1, 'b-', label='Actual')
-plt.plot(times, ideal_velocities[:, 1], 'r--', label='Ideal')
-plt.title('Omega1 (rad/s)')
-plt.legend()
-plt.grid()
+    # Velocities
+    save_plot(times, [verticalVel, ideal_velocities[:, 0]],
+              ["Simulated", "Ideal"], "Vertical Velocity", "Velocity (m/s)",
+              "vertical_velocity.png", linestyles=['-', '--'])
+    save_plot(times, [omega1, ideal_velocities[:, 1]],
+              ["Simulated", "Ideal"], "Omega1", "Angular Velocity (rad/s)",
+              "omega1.png", linestyles=['-', '--'])
+    save_plot(times, [omega2, ideal_velocities[:, 2]],
+              ["Simulated", "Ideal"], "Omega2", "Angular Velocity (rad/s)",
+              "omega2.png", linestyles=['-', '--'])
+    save_plot(times, [omega3], ["Simulated"], "Omega3", "Angular Velocity (rad/s)",
+              "omega3.png", linestyles=['-'])
 
-plt.subplot(3, 4, 7)
-plt.plot(times, omega2, 'b-', label='Actual')
-plt.plot(times, ideal_velocities[:, 2], 'r--', label='Ideal')
-plt.title('Omega2 (rad/s)')
-plt.legend()
-plt.grid()
+    # Velocity error plots
+    save_plot(times, [ideal_velocities[:, 0] - verticalVel],
+              ["Error"], "Vertical Velocity Error", "Error (m/s)",
+              "err_vertical_velocity.png")
+    save_plot(times, [ideal_velocities[:, 1] - omega1],
+              ["Error"], "Omega1 Error", "Error (rad/s)",
+              "err_omega1.png")
+    save_plot(times, [ideal_velocities[:, 2] - omega2],
+              ["Error"], "Omega2 Error", "Error (rad/s)",
+              "err_omega2.png")
 
-plt.subplot(3, 4, 8)
-plt.plot(times, omega3, 'b-', label='Actual')
-plt.plot(times, ideal_velocities[:, 3], 'r--', label='Ideal')
-plt.title('Omega3 (rad/s)')
-plt.legend()
-plt.grid()
+    # Accelerations
+    save_plot(times[::step], [verticalAcc[::step], ideal_accelerations[::step, 0]],
+              ["Simulated", "Ideal"], "Vertical Acceleration", "Acceleration (m/s²)",
+              "vertical_acceleration.png", linestyles=['-', '--'])
+    save_plot(times[::step], [epsilon1[::step], ideal_accelerations[::step, 1]],
+              ["Simulated", "Ideal"], "Epsilon1", "Angular Acceleration (rad/s²)",
+              "epsilon1.png", linestyles=['-', '--'])
+    save_plot(times[::step], [epsilon2[::step], ideal_accelerations[::step, 2]],
+              ["Simulated", "Ideal"], "Epsilon2", "Angular Acceleration (rad/s²)",
+              "epsilon2.png", linestyles=['-', '--'])
+    save_plot(times[::step], [epsilon3[::step]], ["Simulated"], "Epsilon3",
+              "Angular Acceleration (rad/s²)", "epsilon3.png", linestyles=['-'])
+    # Acceleration errors
+    save_plot(times[::step], [ideal_accelerations[::step, 0] - verticalAcc[::step]],
+              ["Error"], "Vertical Acceleration Error", "Error (m/s²)",
+              "err_vertical_acceleration.png")
+    save_plot(times[::step], [ideal_accelerations[::step, 1] - epsilon1[::step]],
+              ["Error"], "Epsilon1 Error", "Error (rad/s²)", "err_epsilon1.png")
+    save_plot(times[::step], [ideal_accelerations[::step, 2] - epsilon2[::step]],
+              ["Error"], "Epsilon2 Error", "Error (rad/s²)", "err_epsilon2.png")
 
-# Acceleration plots
-plt.subplot(3, 4, 9)
-plt.plot(times, verticalAcc_calc, 'b-', label='Calculated')
-plt.plot(times, ideal_accelerations[:, 0], 'r--', label='Ideal')
-plt.title('Vertical Acceleration (m/s²)')
-plt.legend()
-plt.grid()
+    # Torques
+    save_plot(torque_times, [torques[:, 0]], ["Cylinder Force"],
+              "Cylinder Actuation Force (Pz joint)", "Force (N)",
+              "cylinder_force.png")
 
-plt.subplot(3, 4, 10)
-plt.plot(times, epsilon1_calc, 'b-', label='Calculated')
-plt.plot(times, ideal_accelerations[:, 1], 'r--', label='Ideal')
-plt.title('Epsilon1 (rad/s²)')
-plt.legend()
-plt.grid()
+    save_plot(torque_times, [torques[:, 1], torques[:, 2], torques[:, 3]],
+              ["Link 1 (Rz)", "Link 2 (Rz)", "Link 3 (Rz)"],
+              "Joint Actuation Torques", "Torque (N·m)", "all_torques.png")
 
-plt.subplot(3, 4, 11)
-plt.plot(times, epsilon2_calc, 'b-', label='Calculated')
-plt.plot(times, ideal_accelerations[:, 2], 'r--', label='Ideal')
-plt.title('Epsilon2 (rad/s²)')
-plt.legend()
-plt.grid()
 
-plt.subplot(3, 4, 12)
-plt.plot(times, epsilon3_calc, 'b-', label='Calculated')
-plt.plot(times, ideal_accelerations[:, 3], 'r--', label='Ideal')
-plt.title('Epsilon3 (rad/s²)')
-plt.legend()
-plt.grid()
-
-plt.tight_layout(pad=2.0)
-plt.savefig('all_sensors_data_with_ideal.png', dpi=300)
-plt.close()
-
-# ========================================
-# ERROR PLOTS
-# ========================================
-plt.figure(figsize=(15, 15))
-
-# Position errors
-plt.subplot(3, 4, 1)
-plt.plot(times, ideal_vertical_position - verticalDisp)
-plt.title('Vertical Position Error')
-plt.ylabel('Error (m)')
-plt.grid()
-
-plt.subplot(3, 4, 2)
-plt.plot(times, ideal_positions[:, 1] - theta1)
-plt.title('Theta1 Error')
-plt.ylabel('Error (rad)')
-plt.grid()
-
-plt.subplot(3, 4, 3)
-plt.plot(times, ideal_positions[:, 2] - theta2)
-plt.title('Theta2 Error')
-plt.ylabel('Error (rad)')
-plt.grid()
-
-# Velocity errors
-plt.subplot(3, 4, 5)
-plt.plot(times, ideal_velocities[:, 0] - verticalVel)
-plt.title('Vertical Velocity Error')
-plt.ylabel('Error (m/s)')
-plt.grid()
-
-plt.subplot(3, 4, 6)
-plt.plot(times, ideal_velocities[:, 1] - omega1)
-plt.title('Omega1 Error')
-plt.ylabel('Error (rad/s)')
-plt.grid()
-
-plt.subplot(3, 4, 7)
-plt.plot(times, ideal_velocities[:, 2] - omega2)
-plt.title('Omega2 Error')
-plt.ylabel('Error (rad/s)')
-plt.grid()
-
-# Acceleration errors
-plt.subplot(3, 4, 9)
-plt.plot(times[1::3], ideal_accelerations[1::3, 0] - verticalAcc_calc[0:-1:3])
-plt.title('Vertical Acceleration Error')
-plt.ylabel('Error (m/s²)')
-plt.xlabel('Time (s)')
-plt.grid()
-
-plt.subplot(3, 4, 10)
-plt.plot(times, ideal_accelerations[:, 1] - epsilon1_calc)
-plt.title('Epsilon1 Error')
-plt.ylabel('Error (rad/s²)')
-plt.xlabel('Time (s)')
-plt.grid()
-
-plt.subplot(3, 4, 11)
-plt.plot(times, ideal_accelerations[:, 2] - epsilon2_calc)
-plt.title('Epsilon2 Error')
-plt.ylabel('Error (rad/s²)')
-plt.xlabel('Time (s)')
-plt.grid()
-
-plt.savefig('all_errors.png', dpi=300)
-plt.close()
-
-# ========================================
-# TORQUE PLOTS
-# ========================================
-# Convert torque_values list to numpy array
-torques = np.array(torque_values)
-
-# Create proper time vector for torque data
-# Since torque_values is recorded at every simulation step
-torque_times = np.linspace(0, tEnd, len(torques))
-
-# Save torque data
-with open("sensor_outputs/Torques.txt", "w") as f:
-    for tau in torque_values:
-        f.write(str(tau) + "\n")
-
-# Separate plot for cylinder force (Pz joint)
-plt.figure(figsize=(12, 6))
-plt.plot(torque_times, torques[:, 0], 'b-', linewidth=2.5, label='Cylinder Force')
-plt.title('Cylinder Actuation Force (Pz joint)', fontsize=14)
-plt.xlabel('Time (s)', fontsize=12)
-plt.ylabel('Force (N)', fontsize=12)
-plt.legend(fontsize=12)
-plt.grid(True, alpha=0.7)
-plt.tight_layout()
-plt.savefig('cylinder_force.png', dpi=300)
-plt.close()
-
-# Combined torque plot
-plt.figure(figsize=(12, 8))
-plt.plot(torque_times, torques[:, 1], label='Link 1 (Rz)')
-plt.plot(torque_times, torques[:, 2], label='Link 2 (Rz)')
-plt.plot(torque_times, torques[:, 3], label='Link 3 (Rz)')
-
-plt.title('Joint Actuation Torques', fontsize=14)
-plt.xlabel('Time (s)', fontsize=12)
-plt.ylabel('Torque (N·m)', fontsize=12)
-plt.legend()
-plt.grid(True, alpha=0.7)
-plt.tight_layout()
-plt.savefig('all_torques.png', dpi=300)
-plt.show()
+plot_all_results(
+    times,
+    verticalDisp, ideal_vertical_position,
+    theta1, theta2, theta3, ideal_positions,
+    verticalVel, omega1, omega2, omega3, ideal_velocities,
+    verticalAcc, epsilon1, epsilon2, epsilon3, ideal_accelerations,
+    times, torque_values
+)
 
 # Cleanup
 exu.StopRenderer()
