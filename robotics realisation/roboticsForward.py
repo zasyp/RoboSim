@@ -423,7 +423,7 @@ simulationSettings = exu.SimulationSettings()
 
 # Time integration settings
 tEnd = 10  # Simulation time [s]
-h = 0.25e-3  # Step size [s]
+h = 0.1e-3  # Step size [s]
 
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
 simulationSettings.timeIntegration.endTime = tEnd
@@ -655,7 +655,7 @@ plt.grid()
 
 # Acceleration errors
 plt.subplot(3, 4, 9)
-plt.plot(times, ideal_accelerations[:, 0] - verticalAcc_calc)
+plt.plot(times[1::3], ideal_accelerations[1::3, 0] - verticalAcc_calc[0:-1:3])
 plt.title('Vertical Acceleration Error')
 plt.ylabel('Error (m/s²)')
 plt.xlabel('Time (s)')
