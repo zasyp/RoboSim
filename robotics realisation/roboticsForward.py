@@ -6,6 +6,7 @@ from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
 from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
 from exudyn.robotics.special import *
+from scipy.signal import savgol_filter
 from helpful.constants import *
 
 # ========================================
@@ -147,6 +148,7 @@ def PreStepUF(mbs, t):
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
         mbs.SetObjectParameter(oKT, 'jointForceVector', dynamical)
+
     return True
 
 mbs.SetPreStepUserFunction(PreStepUF)
@@ -296,7 +298,7 @@ simulationSettings = exu.SimulationSettings()
 
 # Time integration settings
 tEnd = 5  # Simulation time [s]
-h = 0.1e-3  # Step size [s]
+h = 1e-2  # Step size [s]
 
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
 simulationSettings.timeIntegration.endTime = tEnd
@@ -332,9 +334,10 @@ mbs.SolveDynamic(
 )
 
 # ========================================
-# DATA PROCESSING AND PLOTTING
+# DATA PROCESSING AND PLOTTING (fixed)
 # ========================================
-# Load sensor data
+# Load sensor data (stored arrays: [time, x, y, z] for translational sensors,
+# and [time, wx, wy, wz] or [time, rx, ry, rz] for rotational sensors)
 verticalDisp_data = mbs.GetSensorStoredData(verticalDispSens)
 theta1_data = mbs.GetSensorStoredData(theta1Sensor)
 theta2_data = mbs.GetSensorStoredData(theta2Sensor)
@@ -350,32 +353,50 @@ epsilon1_data = mbs.GetSensorStoredData(epsilon1Sensor)
 epsilon2_data = mbs.GetSensorStoredData(epsilon2Sensor)
 epsilon3_data = mbs.GetSensorStoredData(epsilon3Sensor)
 
-# Extract time vector
+# Time vector (assume all sensors have same time base)
 times = theta1_data[:, 0]
 
-# Extract actual sensor data (relative angles)
-verticalDisp = verticalDisp_data[:, 3]  # z-component
-theta1 = theta1_data[:, 3]
-theta2 = theta2_data[:, 3] - theta1
-theta3 = theta3_data[:, 3] - theta2 - theta1
+# --- Extract absolute quantities from sensor outputs ---
+# For translational sensors: columns = [time, x, y, z]
+verticalDisp_abs = verticalDisp_data[:, 3]   # z-component (absolute)
+verticalVel_abs = verticalVel_data[:, 3]
+verticalAcc_abs = verticalAcc_data[:, 3]
 
-verticalVel = verticalVel_data[:, 3]
-omega1 = omega1_data[:, 3]
-omega2 = omega2_data[:, 3] - omega1
-omega3 = omega3_data[:, 3] - omega2 - omega1
+# For rotational sensors: assume columns = [time, rx, ry, rz] or angular velocities/accelerations
+theta1_abs = theta1_data[:, 3]   # absolute orientation around local axis (rad)
+theta2_abs = theta2_data[:, 3]
+theta3_abs = theta3_data[:, 3]
 
-verticalAcc = verticalAcc_data[:, 3]
-epsilon1 = epsilon1_data[:, 3] * 180/pi
-epsilon2 = epsilon2_data[:, 3] * 180/pi - epsilon1
-epsilon3 = epsilon3_data[:, 3] * 180/pi - epsilon2
+omega1_abs = omega1_data[:, 3]   # angular velocity (rad/s)
+omega2_abs = omega2_data[:, 3]
+omega3_abs = omega3_data[:, 3]
 
-# Calculate accelerations via numerical differentiation
-# verticalAcc = np.gradient(verticalVel, times)
-# epsilon1 = np.gradient(omega1, times)
-# epsilon2 = np.gradient(omega2, times)
-# epsilon3 = np.gradient(omega3, times)
+epsilon1_abs = epsilon1_data[:, 3]  # angular acceleration (rad/s^2)
+epsilon2_abs = epsilon2_data[:, 3]
+epsilon3_abs = epsilon3_data[:, 3]
 
-# Generate ideal trajectory data
+# --- Compute relative joint values correctly (child - parent) ---
+# Cylinder is link 0 (prismatic) -> its vertical displacement is verticalDisp_abs
+verticalDisp = verticalDisp_abs
+
+# Rotational joints: relative angle = absolute(child) - absolute(parent)
+theta1 = theta1_abs.copy()                      # first revolute joint relative to base (if base rotation is zero)
+theta2 = theta2_abs - theta1_abs                # link2 relative to link1
+theta3 = theta3_abs - theta2_abs                # link3 relative to link2
+
+# Velocities
+verticalVel = verticalVel_abs
+omega1 = omega1_abs.copy()
+omega2 = omega2_abs - omega1_abs
+omega3 = omega3_abs - omega2_abs
+
+# Accelerations
+verticalAcc = np.gradient(verticalVel, times)
+epsilon1 = np.gradient(omega1, times)
+epsilon2 = np.gradient(omega2, times)
+epsilon3 = np.gradient(omega3, times)
+
+# --- Generate ideal trajectory data (unchanged) ---
 n = len(times)
 ideal_positions = np.zeros((n, 4))
 ideal_velocities = np.zeros((n, 4))
@@ -422,7 +443,7 @@ def plot_all_results(times,
         plt.savefig(os.path.join(output_dir, filename), dpi=300)
         plt.close()
 
-    step = 1
+    step = 2
 
     # Positions
     save_plot(times, [verticalDisp, ideal_vertical_position],
@@ -515,3 +536,85 @@ plot_all_results(
 # Cleanup
 exu.StopRenderer()
 mbs.SolutionViewer()
+
+# ========================================
+# SCATTER PLOTS FOR ACCELERATIONS
+# ========================================
+def plot_accelerations_scatter(times,
+                               verticalAcc, ideal_vertical_acc,
+                               epsilon1, epsilon2, epsilon3,
+                               ideal_eps1, ideal_eps2, ideal_eps3,
+                               output_dir="plots"):
+    os.makedirs(output_dir, exist_ok=True)
+
+    def save_scatter(x, y_list, labels, title, ylabel, filename, alpha=0.6, s=10):
+        plt.figure(figsize=(8, 6))
+        for y, label in y_list:
+            plt.scatter(x, y, label=label, alpha=alpha, s=s)
+        plt.title(title)
+        plt.xlabel("Time (s)")
+        plt.ylabel(ylabel)
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.show()
+        plt.savefig(os.path.join(output_dir, filename), dpi=300)
+        plt.close()
+
+    step = 1  # Use every point or increase step to reduce density
+    t_sub = times[::step]
+    verticalAcc_sub = verticalAcc[::step]
+    epsilon1_sub = epsilon1[::step]
+    epsilon2_sub = epsilon2[::step]
+    epsilon3_sub = epsilon3[::step]
+
+    ideal_vertical_acc_sub = ideal_vertical_acc[::step]
+    ideal_eps1_sub = ideal_eps1[::step]
+    ideal_eps2_sub = ideal_eps2[::step]
+    ideal_eps3_sub = ideal_eps3[::step]
+
+    # Vertical acceleration
+    save_scatter(t_sub,
+                 [(verticalAcc_sub, "Simulated"), (ideal_vertical_acc_sub, "Ideal")],
+                 ["Simulated", "Ideal"],
+                 "Vertical Acceleration (Scatter)", "Acceleration (m/s²)",
+                 "vertical_acceleration_scatter.png")
+
+    # Epsilon1
+    save_scatter(t_sub,
+                 [(epsilon1_sub, "Simulated")],
+                 ["Simulated", "Ideal"],
+                 "Epsilon1 - Angular Acceleration Link 1 (Scatter)", "Angular Acceleration (rad/s²)",
+                 "epsilon1_scatter.png")
+
+    # Epsilon2
+    save_scatter(t_sub,
+                 [(epsilon2_sub, "Simulated")],
+                 ["Simulated", "Ideal"],
+                 "Epsilon2 - Angular Acceleration Link 2 (Scatter)", "Angular Acceleration (rad/s²)",
+                 "epsilon2_scatter.png")
+
+    # Epsilon3 — only simulated (no ideal torque applied)
+    save_scatter(t_sub,
+                 [(epsilon3_sub, "Simulated")],
+                 ["Simulated"],
+                 "Epsilon3 - Angular Acceleration Link 3 (Scatter)", "Angular Acceleration (rad/s²)",
+                 "epsilon3_scatter.png")
+
+
+
+# === Вызов функции после вычисления ускорений ===
+# Сначала убедимся, что идеальные ускорения доступны
+ideal_vertical_acc = ideal_accelerations[:, 0]
+ideal_eps1 = ideal_accelerations[:, 1]
+ideal_eps2 = ideal_accelerations[:, 2]
+ideal_eps3 = ideal_accelerations[:, 3]
+
+# Вызов новой функции
+plot_accelerations_scatter(
+    times,
+    verticalAcc, ideal_vertical_acc,
+    epsilon1, epsilon2, epsilon3,
+    ideal_eps1, ideal_eps2, ideal_eps3,
+    output_dir="plots"
+)
