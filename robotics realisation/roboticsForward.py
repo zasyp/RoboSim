@@ -78,7 +78,6 @@ robot.AddLink(RobotLink(
     visualization=visualisationLink3,
     PDcontrol=(0, 0)  # No PD control for last link
 ))
-
 # ========================================
 # SYSTEM SETUP
 # ========================================
@@ -120,14 +119,6 @@ robotTrajectory.Add(ProfileConstantAcceleration(q2, 1))
 robotTrajectory.Add(ProfileConstantAcceleration(q3, 1))
 robotTrajectory.Add(ProfileConstantAcceleration(q4, 1))
 robotTrajectory.Add(ProfileConstantAcceleration(q5, 1))
-
-# ========================================
-# SENSORS
-# ========================================
-output_dir = "sensor_outputs"
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-
 # ==========================================
 # PRE-STEP USER FUNCTION FOR DYNAMIC CONTROL
 # ==========================================
@@ -136,24 +127,26 @@ def PreStepUF(mbs, t):
     if useKT:
         # Getting trajectory parameters
         [u,v,a] = robotTrajectory.Evaluate(t)
-
         # Calculating torques according to tau = M * ddq
         HT = robot.JointHT(u)
         jointJacs = JointJacobian(robot, HT, HT)
         MM = MassMatrix(robot, HT, jointJacs)
         dynamical = MM.dot(a)
         torque_values.append(dynamical)
-
         # Setting system parameters
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
         mbs.SetObjectParameter(oKT, 'jointForceVector', dynamical)
-
     return True
 
 mbs.SetPreStepUserFunction(PreStepUF)
 
-# Motion sensors
+# ========================================
+# SENSORS
+# ========================================
+output_dir = "sensor_outputs"
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 verticalDispSens = mbs.AddSensor(SensorKinematicTree(
     objectNumber=oKT,
     linkNumber=0,
@@ -164,7 +157,6 @@ verticalDispSens = mbs.AddSensor(SensorKinematicTree(
     fileName=os.path.join(output_dir, "verticalDisp.txt"),
     name="verticalDisp"
 ))
-
 verticalVelSens = mbs.AddSensor(SensorKinematicTree(
     objectNumber=oKT,
     linkNumber=0,
@@ -175,18 +167,6 @@ verticalVelSens = mbs.AddSensor(SensorKinematicTree(
     fileName=os.path.join(output_dir, "verticalVel.txt"),
     name="verticalVel"
 ))
-
-verticalAccSens = mbs.AddSensor(SensorKinematicTree(
-    objectNumber=oKT,
-    linkNumber=0,
-    localPosition=[0, 0, 0],
-    outputVariableType=exu.OutputVariableType.AccelerationLocal,
-    storeInternal=True,
-    writeToFile=True,
-    fileName=os.path.join(output_dir, "verticalAcc.txt"),
-    name="verticalAcc"
-))
-
 # Joint 1 sensors (Rz)
 theta1Sensor = mbs.AddSensor(SensorKinematicTree(
     objectNumber=oKT,
@@ -198,7 +178,6 @@ theta1Sensor = mbs.AddSensor(SensorKinematicTree(
     fileName=os.path.join(output_dir, "theta1_deg.txt"),
     name="theta1_deg"
 ))
-
 omega1Sensor = mbs.AddSensor(SensorKinematicTree(
     objectNumber=oKT,
     linkNumber=1,
@@ -209,18 +188,6 @@ omega1Sensor = mbs.AddSensor(SensorKinematicTree(
     fileName=os.path.join(output_dir, "omega1_deg.txt"),
     name="omega1_deg"
 ))
-
-epsilon1Sensor = mbs.AddSensor(SensorKinematicTree(
-    objectNumber=oKT,
-    linkNumber=1,
-    localPosition=[0, 0, 0],
-    outputVariableType=exu.OutputVariableType.AngularAccelerationLocal,
-    storeInternal=True,
-    writeToFile=True,
-    fileName=os.path.join(output_dir, "epsilon1_deg.txt"),
-    name="epsilon1_deg"
-))
-
 # Joint 2 sensors (Rz)
 theta2Sensor = mbs.AddSensor(SensorKinematicTree(
     objectNumber=oKT,
@@ -232,7 +199,6 @@ theta2Sensor = mbs.AddSensor(SensorKinematicTree(
     fileName=os.path.join(output_dir, "theta2_deg.txt"),
     name="theta2_deg"
 ))
-
 omega2Sensor = mbs.AddSensor(SensorKinematicTree(
     objectNumber=oKT,
     linkNumber=2,
@@ -243,18 +209,6 @@ omega2Sensor = mbs.AddSensor(SensorKinematicTree(
     fileName=os.path.join(output_dir, "omega2_deg.txt"),
     name="omega2_deg"
 ))
-
-epsilon2Sensor = mbs.AddSensor(SensorKinematicTree(
-    objectNumber=oKT,
-    linkNumber=2,
-    localPosition=[0, 0, 0],
-    outputVariableType=exu.OutputVariableType.AngularAccelerationLocal,
-    storeInternal=True,
-    writeToFile=True,
-    fileName=os.path.join(output_dir, "epsilon2_deg.txt"),
-    name="epsilon2_deg"
-))
-
 # Joint 3 sensors (Rz)
 theta3Sensor = mbs.AddSensor(SensorKinematicTree(
     objectNumber=oKT,
@@ -266,7 +220,6 @@ theta3Sensor = mbs.AddSensor(SensorKinematicTree(
     fileName=os.path.join(output_dir, "theta3_deg.txt"),
     name="theta3_deg"
 ))
-
 omega3Sensor = mbs.AddSensor(SensorKinematicTree(
     objectNumber=oKT,
     linkNumber=3,
@@ -278,22 +231,10 @@ omega3Sensor = mbs.AddSensor(SensorKinematicTree(
     name="omega3_deg"
 ))
 
-epsilon3Sensor = mbs.AddSensor(SensorKinematicTree(
-    objectNumber=oKT,
-    linkNumber=3,
-    localPosition=[0, 0, 0],
-    outputVariableType=exu.OutputVariableType.AngularAccelerationLocal,
-    storeInternal=True,
-    writeToFile=True,
-    fileName=os.path.join(output_dir, "epsilon3_deg.txt"),
-    name="epsilon3_deg"
-))
-
 # ========================================
 # SIMULATION SETUP
 # ========================================
 mbs.Assemble()
-
 simulationSettings = exu.SimulationSettings()
 
 # Time integration settings
@@ -336,72 +277,41 @@ mbs.SolveDynamic(
 # ========================================
 # DATA PROCESSING AND PLOTTING (fixed)
 # ========================================
-# Load sensor data (stored arrays: [time, x, y, z] for translational sensors,
-# and [time, wx, wy, wz] or [time, rx, ry, rz] for rotational sensors)
 verticalDisp_data = mbs.GetSensorStoredData(verticalDispSens)
 theta1_data = mbs.GetSensorStoredData(theta1Sensor)
 theta2_data = mbs.GetSensorStoredData(theta2Sensor)
 theta3_data = mbs.GetSensorStoredData(theta3Sensor)
-
 verticalVel_data = mbs.GetSensorStoredData(verticalVelSens)
 omega1_data = mbs.GetSensorStoredData(omega1Sensor)
 omega2_data = mbs.GetSensorStoredData(omega2Sensor)
 omega3_data = mbs.GetSensorStoredData(omega3Sensor)
 
-verticalAcc_data = mbs.GetSensorStoredData(verticalAccSens)
-epsilon1_data = mbs.GetSensorStoredData(epsilon1Sensor)
-epsilon2_data = mbs.GetSensorStoredData(epsilon2Sensor)
-epsilon3_data = mbs.GetSensorStoredData(epsilon3Sensor)
-
-# Time vector (assume all sensors have same time base)
 times = theta1_data[:, 0]
-
-# --- Extract absolute quantities from sensor outputs ---
-# For translational sensors: columns = [time, x, y, z]
-verticalDisp_abs = verticalDisp_data[:, 3]   # z-component (absolute)
+verticalDisp_abs = verticalDisp_data[:, 3]
 verticalVel_abs = verticalVel_data[:, 3]
-verticalAcc_abs = verticalAcc_data[:, 3]
-
-# For rotational sensors: assume columns = [time, rx, ry, rz] or angular velocities/accelerations
-theta1_abs = theta1_data[:, 3]   # absolute orientation around local axis (rad)
+theta1_abs = theta1_data[:, 3]
 theta2_abs = theta2_data[:, 3]
 theta3_abs = theta3_data[:, 3]
-
-omega1_abs = omega1_data[:, 3]   # angular velocity (rad/s)
+omega1_abs = omega1_data[:, 3]
 omega2_abs = omega2_data[:, 3]
 omega3_abs = omega3_data[:, 3]
 
-epsilon1_abs = epsilon1_data[:, 3]  # angular acceleration (rad/s^2)
-epsilon2_abs = epsilon2_data[:, 3]
-epsilon3_abs = epsilon3_data[:, 3]
-
-# --- Compute relative joint values correctly (child - parent) ---
-# Cylinder is link 0 (prismatic) -> its vertical displacement is verticalDisp_abs
-verticalDisp = verticalDisp_abs
-
-# Rotational joints: relative angle = absolute(child) - absolute(parent)
-theta1 = theta1_abs.copy()                      # first revolute joint relative to base (if base rotation is zero)
-theta2 = theta2_abs - theta1_abs                # link2 relative to link1
-theta3 = theta3_abs - theta2_abs                # link3 relative to link2
-
-# Velocities
+theta1 = theta1_abs.copy()
+theta2 = theta2_abs - theta1_abs
+theta3 = theta3_abs - theta2_abs
 verticalVel = verticalVel_abs
 omega1 = omega1_abs.copy()
 omega2 = omega2_abs - omega1_abs
 omega3 = omega3_abs - omega2_abs
-
-# Accelerations
 verticalAcc = np.gradient(verticalVel, times)
 epsilon1 = np.gradient(omega1, times)
 epsilon2 = np.gradient(omega2, times)
 epsilon3 = np.gradient(omega3, times)
 
-# --- Generate ideal trajectory data (unchanged) ---
 n = len(times)
 ideal_positions = np.zeros((n, 4))
 ideal_velocities = np.zeros((n, 4))
 ideal_accelerations = np.zeros((n, 4))
-
 for i, t in enumerate(times):
     u, v, a = robotTrajectory.Evaluate(t)
     ideal_positions[i] = u
@@ -443,31 +353,7 @@ def plot_all_results(times,
         plt.savefig(os.path.join(output_dir, filename), dpi=300)
         plt.close()
 
-    step = 2
-
-    # Positions
-    save_plot(times, [verticalDisp, ideal_vertical_position],
-              ["Simulated", "Ideal"], "Vertical Position", "Position (m)",
-              "vertical_position.png", linestyles=['-', '--'])
-    save_plot(times, [theta1, ideal_positions[:, 1]],
-              ["Simulated", "Ideal"], "Theta1", "Angle (rad)",
-              "theta1.png", linestyles=['-', '--'])
-    save_plot(times, [theta2, ideal_positions[:, 2]],
-              ["Simulated", "Ideal"], "Theta2", "Angle (rad)",
-              "theta2.png", linestyles=['-', '--'])
-    save_plot(times, [theta3], ["Simulated"], "Theta3", "Angle (rad)",
-              "theta3.png", linestyles=['-'])
-
-    # Position error plots
-    save_plot(times, [ideal_vertical_position - verticalDisp],
-              ["Error"], "Vertical Position Error", "Error (m)",
-              "err_vertical_position.png")
-    save_plot(times, [ideal_positions[:, 1] - theta1],
-              ["Error"], "Theta1 Error", "Error (rad)",
-              "err_theta1.png")
-    save_plot(times, [ideal_positions[:, 2] - theta2],
-              ["Error"], "Theta2 Error", "Error (rad)",
-              "err_theta2.png")
+    step = 1
 
     # Velocities
     save_plot(times, [verticalVel, ideal_velocities[:, 0]],
@@ -526,7 +412,7 @@ def plot_all_results(times,
 
 plot_all_results(
     times,
-    verticalDisp, ideal_vertical_position,
+    verticalDisp_abs, ideal_vertical_position,
     theta1, theta2, theta3, ideal_positions,
     verticalVel, omega1, omega2, omega3, ideal_velocities,
     verticalAcc, epsilon1, epsilon2, epsilon3, ideal_accelerations,
@@ -615,3 +501,45 @@ plot_accelerations_scatter(
     ideal_eps1, ideal_eps2, ideal_eps3,
     output_dir="plots"
 )
+
+plt.rcParams['font.family'] = 'Times New Roman'
+plt.rcParams['font.size'] = 16
+
+plt.figure(dpi=120)
+plt.subplots_adjust(wspace=0.1, hspace=0.1)
+
+plt.subplot(2, 2, 1)
+plt.plot(times, theta1, label='Simulated θ1', linewidth=2.5)
+plt.plot(times, ideal_positions[:, 1], '--', label='Ideal θ1', linewidth=2.5)
+plt.title('Link 1 position vs Ideal', fontsize=16)
+plt.xlabel('Time (s)', fontsize=14)
+plt.ylabel('Angle (rad)', fontsize=14)
+plt.legend(fontsize=10)
+plt.grid(True)
+
+plt.subplot(2, 2, 2)
+plt.plot(times, theta2, label='Simulated θ2', linewidth=2.5)
+plt.plot(times, ideal_positions[:, 2], '--', label='Ideal θ2', linewidth=2.5)
+plt.plot(times, theta3, label='Simulated θ3', linewidth=2.5)
+plt.title('Link 2 and 3 positions vs Ideal', fontsize=16)
+plt.xlabel('Time (s)', fontsize=14)
+plt.ylabel('Angle (rad)', fontsize=14)
+plt.legend(fontsize=10)
+plt.grid(True)
+
+plt.subplot(2, 2, 3)
+plt.plot(times, ideal_positions[:, 1] - theta1, linewidth=2.5)
+plt.title('Position errors for link 1', fontsize=16)
+plt.xlabel('Time (s)', fontsize=14)
+plt.ylabel('Error (rad)', fontsize=14)
+plt.grid(True)
+
+plt.subplot(2, 2, 4)
+plt.plot(times, ideal_positions[:, 2] - theta2, linewidth=2.5)
+plt.title('Position errors for link 2', fontsize=16)
+plt.xlabel('Time (s)', fontsize=14)
+plt.ylabel('Error (rad)', fontsize=14)
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
