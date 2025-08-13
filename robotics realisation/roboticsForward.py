@@ -21,7 +21,7 @@ visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 # ROBOT CONFIGURATION
 # ========================================
 useKT = True
-q0 = np.array([0, 2*pi/3, -2*pi/3, 0])  # Initial configuration
+q0 = np.array([0, 2*pi/3, -4*pi/3, 0])  # Initial configuration
 
 # Create robot base
 baseBox = RobotBase(visualization=visualisationBox)
@@ -110,7 +110,7 @@ q1 = [0.1, -0.5 * np.pi, 0.3 * np.pi, 0]
 q2 = [0.2, 0.5 * np.pi, -0.3 * np.pi, 0]
 q3 = [0.1, -0.5 * np.pi, -0.1 * np.pi, 0]
 q4 = [0.3, -0.3 * np.pi, -0.4 * np.pi, 0]
-q5 = [0, 0, 0, 0]
+q5 = q0
 
 trajectory_points = [q0, q1, q2, q3, q4, q5]
 
