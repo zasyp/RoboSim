@@ -103,7 +103,7 @@ mbs.AddObject(ObjectConnectorCoordinate(
 # ========================================
 # TRAJECTORY DEFINITION
 # ========================================
-robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=1)
+robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=2)
 
 # Define waypoints for the trajectory
 q1 = [0.1, -0.5 * np.pi, 0.3 * np.pi, 0]
@@ -114,8 +114,9 @@ q5 = [0, 0, 0, 0]
 
 trajectory_points = [q0, q1, q2, q3, q4, q5]
 
-for i in range(trajectory_points):
-    if point[i] - point[i-1] >= 2*pi:
+for i in range(len(trajectory_points)):
+    diff = np.array(trajectory_points[i]) - np.array(trajectory_points[i-1])
+    if np.any(np.abs(diff) >= 2 * np.pi):
         raise Exception("Singularity error")
 
 # Add motion profiles with constant acceleration
