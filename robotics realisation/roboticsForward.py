@@ -8,7 +8,6 @@ from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
 from exudyn.robotics.special import *
 from scipy.signal import savgol_filter
 from helpful.constants import *
-
 # ========================================
 # VISUALIZATION SETUP
 # ========================================
@@ -22,7 +21,7 @@ visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 # ROBOT CONFIGURATION
 # ========================================
 useKT = True
-q0 = np.array([0, 0, 0, 0])  # Initial configuration
+q0 = np.array([0, 2*pi/3, -2*pi/3, 0])  # Initial configuration
 
 # Create robot base
 baseBox = RobotBase(visualization=visualisationBox)
@@ -104,7 +103,7 @@ mbs.AddObject(ObjectConnectorCoordinate(
 # ========================================
 # TRAJECTORY DEFINITION
 # ========================================
-robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=0)
+robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=1)
 
 # Define waypoints for the trajectory
 q1 = [0.1, -0.5 * np.pi, 0.3 * np.pi, 0]
@@ -238,7 +237,7 @@ mbs.Assemble()
 simulationSettings = exu.SimulationSettings()
 
 # Time integration settings
-tEnd = 5  # Simulation time [s]
+tEnd = 10  # Simulation time [s]
 h = 1e-2  # Step size [s]
 
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)

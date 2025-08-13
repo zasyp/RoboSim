@@ -1,3 +1,4 @@
+import os
 import exudyn.graphics as graphics
 import numpy as np
 
@@ -21,19 +22,22 @@ joint1_pos = np.array([0, 0, 300])
 joint2_pos = np.array([-l1, 0, com2_global[2]])
 joint3_pos = np.array([-(l1 + l2), 0, com3_global[2]])
 
-graphicsBodyBox = graphics.FromSTLfile('../graphics/box.stl',
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+GRAPHICS_DIR = os.path.join(CURRENT_DIR, "..", "graphics")
+
+graphicsBodyBox = graphics.FromSTLfile(os.path.join(GRAPHICS_DIR, "box.stl"),
                                     color=graphics.color.blue,
                                     scale=0.001)
-graphicsBody1 = graphics.FromSTLfile('../graphics/link1.stl',
+graphicsBody1 = graphics.FromSTLfile(os.path.join(GRAPHICS_DIR, "link1.stl"),
                                      color=graphics.color.dodgerblue,
                                      scale=0.001)
-graphicsBody2 = graphics.FromSTLfile('../graphics/link2.stl',
+graphicsBody2 = graphics.FromSTLfile(os.path.join(GRAPHICS_DIR, "link2.stl"),
                                      color=graphics.color.red,
                                      scale=0.001)
-graphicsBody3 = graphics.FromSTLfile('../graphics/link3.stl',
+graphicsBody3 = graphics.FromSTLfile(os.path.join(GRAPHICS_DIR, "link3.stl"),
                                      color=graphics.color.dodgerblue,
                                      scale=0.001)
-graphicsBodyCylinder = graphics.FromSTLfile('../graphics/cylinder.stl',
+graphicsBodyCylinder = graphics.FromSTLfile(os.path.join(GRAPHICS_DIR, "cylinder.stl"),
                                             color=graphics.color.dodgerblue,
                                             scale=0.001)
 
