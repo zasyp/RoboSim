@@ -6,7 +6,6 @@ from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
 from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
 from exudyn.robotics.special import *
-from scipy.signal import savgol_filter
 from constants import *
 # ========================================
 # VISUALIZATION SETUP
@@ -22,7 +21,7 @@ visualisationLink3 = VRobotLink(graphicsData=[graphicsBody3])
 # ========================================
 useKT = True
 q0 = np.array([0, 2*pi/3, -4*pi/3, 0])  # Initial configuration
-
+q0 = [0, 0, 0, 0]
 # Create robot base
 baseBox = RobotBase(visualization=visualisationBox)
 
@@ -498,3 +497,41 @@ plot_accelerations_scatter(
     ideal_eps1, ideal_eps2, ideal_eps3,
     output_dir="plots"
 )
+
+
+plt.rcParams['font.family'] = 'Times New Roman'
+plt.rcParams['font.size'] = 16
+plt.figure(dpi=120)
+plt.subplots_adjust(wspace=0.1, hspace=0.1)
+plt.subplot(2, 2, 1)
+plt.plot(times, theta1, label='Simulated θ1', linewidth=2.5)
+plt.plot(times, ideal_positions[:, 1], '--', label='Ideal θ1', linewidth=2.5)
+plt.title('Link 1 position vs Ideal', fontsize=16)
+plt.xlabel('Time (s)', fontsize=14)
+plt.ylabel('Angle (rad)', fontsize=14)
+plt.legend(fontsize=10)
+plt.grid(True)
+plt.subplot(2, 2, 2)
+plt.plot(times, theta2, label='Simulated θ2', linewidth=2.5)
+plt.plot(times, ideal_positions[:, 2], '--', label='Ideal θ2', linewidth=2.5)
+plt.plot(times, theta3, label='Simulated θ3', linewidth=2.5)
+plt.title('Link 2 and 3 positions vs Ideal', fontsize=16)
+plt.xlabel('Time (s)', fontsize=14)
+plt.ylabel('Angle (rad)', fontsize=14)
+plt.legend(fontsize=10)
+plt.grid(True)
+plt.subplot(2, 2, 3)
+plt.plot(times, ideal_positions[:, 1] - theta1, linewidth=2.5)
+plt.title('Position errors for link 1', fontsize=16)
+plt.xlabel('Time (s)', fontsize=14)
+plt.ylabel('Error (rad)', fontsize=14)
+plt.grid(True)
+plt.subplot(2, 2, 4)
+plt.plot(times, ideal_positions[:, 2] - theta2, linewidth=2.5)
+plt.title('Position errors for link 2', fontsize=16)
+plt.xlabel('Time (s)', fontsize=14)
+plt.ylabel('Error (rad)', fontsize=14)
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()

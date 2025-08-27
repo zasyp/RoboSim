@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.8.26)  27 AUG 2025 18:02
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.8.26)  27 AUG 2025 18:42
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -242,7 +242,14 @@ LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 149.
 File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count284
 \l__pdf_internal_box=\box55
-) (formulas.aux)
+) (formulas.aux
+
+LaTeX Warning: Label `fig:modified_scara' multiply defined.
+
+
+LaTeX Warning: Label `fig:modified_scara' multiply defined.
+
+)
 \openout1 = `formulas.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
@@ -288,6 +295,32 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 17.
  (C:\Users\zasyp\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
+<waffer robot.png, id=1, 983.92593pt x 593.96906pt>
+File: waffer robot.png Graphic file (type png)
+<use waffer robot.png>
+Package pdftex.def Info: waffer robot.png  used on input line 75.
+(pdftex.def)             Requested size: 252.0pt x 152.11719pt.
+<default scara.png, id=3, 938.00438pt x 505.13719pt>
+File: default scara.png Graphic file (type png)
+<use default scara.png>
+Package pdftex.def Info: default scara.png  used on input line 84.
+(pdftex.def)             Requested size: 252.0pt x 135.70287pt.
+<fancy scara.png, id=4, 938.00438pt x 484.05844pt>
+File: fancy scara.png Graphic file (type png)
+<use fancy scara.png>
+Package pdftex.def Info: fancy scara.png  used on input line 92.
+(pdftex.def)             Requested size: 252.0pt x 130.04015pt.
+<sim window.png, id=5, 791.95876pt x 669.2503pt>
+File: sim window.png Graphic file (type png)
+<use sim window.png>
+Package pdftex.def Info: sim window.png  used on input line 100.
+(pdftex.def)             Requested size: 252.0pt x 212.94925pt.
+<positions plot.png, id=6, 728.12025pt x 461.3235pt>
+File: positions plot.png Graphic file (type png)
+<use positions plot.png>
+Package pdftex.def Info: positions plot.png  used on input line 108.
+(pdftex.def)             Requested size: 252.0pt x 159.6636pt.
+
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -301,26 +334,28 @@ Before submitting the final camera ready copy, remember to:
 
 [1
 
-{C:/Users/zasyp/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}
-
-] (formulas.aux)
+{C:/Users/zasyp/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc} <./waffer robot.png> <./default scara.png> <./fancy scara.png> <./sim window.png> <./positions plot.png>] (formulas.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
  ***********
+
+
+LaTeX Warning: There were multiply-defined labels.
+
  ) 
 Here is how much of TeX's memory you used:
- 4250 strings out of 474486
- 67078 string characters out of 5743755
- 1934542 words of memory out of 5000000
- 26504 multiletter control sequences out of 15000+600000
- 584673 words of font info for 94 fonts, out of 8000000 for 9000
+ 4291 strings out of 474486
+ 67996 string characters out of 5743755
+ 1937542 words of memory out of 5000000
+ 26544 multiletter control sequences out of 15000+600000
+ 585751 words of font info for 95 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 57i,8n,65p,271b,153s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 57i,8n,65p,271b,227s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb>
-Output written on formulas.pdf (1 page, 103503 bytes).
+Output written on formulas.pdf (1 page, 402338 bytes).
 PDF statistics:
- 57 PDF objects out of 1000 (max. 8388607)
+ 68 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 26 words of extra memory for PDF output out of 10000 (max. 10000000)
 

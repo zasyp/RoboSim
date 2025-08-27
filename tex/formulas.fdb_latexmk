@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1756306955.80537 "c:/Users/zasyp/RoboSim/tex/formulas.tex" "formulas.pdf" "formulas" 1756306956.43647 0
+["pdflatex"] 1756309345.74752 "c:/Users/zasyp/RoboSim/tex/formulas.tex" "formulas.pdf" "formulas" 1756309346.8753 0
   "C:/Users/zasyp/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1756219711 82507 a9eef8696c92627b87e9975edea03b2a ""
   "C:/Users/zasyp/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1756219684 24225046 42e00180bac49318fcac4bfbcc398791 ""
   "C:/Users/zasyp/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc" 1458473887 4993 80dc9bab7f31fb78a000ccfed0e27cab ""
@@ -64,9 +64,14 @@
   "C:/Users/zasyp/AppData/Local/Programs/MiKTeX/tex/latex/tools/bm.sty" 1700599895 13231 2c742011581e2bf297e33520567d9464 ""
   "C:/Users/zasyp/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/xcolor.sty" 1700127522 55487 80a65caedd3722f4c20a14a69e785d8f ""
   "IEEEtran.cls" 1756218554 288304 5b2e4fa15b0f7eabb840ebf67df4c0f7 ""
-  "c:/Users/zasyp/RoboSim/tex/formulas.tex" 1756306954 2420 90d8e5eefe90e72088dddd6d3eb10cd6 ""
-  "formulas.aux" 1756306956 369 dc20f443a011fa9fb1901198b1631d5e "pdflatex"
-  "formulas.tex" 1756306954 2420 90d8e5eefe90e72088dddd6d3eb10cd6 ""
+  "c:/Users/zasyp/RoboSim/tex/formulas.tex" 1756309345 3518 f218a2de04fa961f752c0b59e1087ce2 ""
+  "default scara.png" 1756307136 83104 67d3e1cf415935d0b88ae6e34a237b9a ""
+  "fancy scara.png" 1756307157 102644 91eec2b118d8e30a32f8a590a35d0a71 ""
+  "formulas.aux" 1756309346 1268 b6537d01b36541582fee32735e85e59e "pdflatex"
+  "formulas.tex" 1756309345 3518 f218a2de04fa961f752c0b59e1087ce2 ""
+  "positions plot.png" 1756309337 89033 10f1d71f22944e8db81f3e3d1e05c0ff ""
+  "sim window.png" 1756308116 32593 98c02952f16715c2f82ea84d1fb871c2 ""
+  "waffer robot.png" 1756307091 89879 78cfbdb846e6f019233062c1b341dccc ""
   (generated)
   "formulas.aux"
   "formulas.log"

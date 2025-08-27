@@ -130,11 +130,48 @@ INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\cme
 INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmbsy10.tfm
 INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmbsy7.tfm
 INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmbsy5.tfm
+INPUT .\waffer robot.png
+INPUT .\waffer robot.png
+INPUT .\waffer robot.png
+INPUT .\waffer robot.png
 OUTPUT formulas.pdf
+INPUT .\waffer robot.png
+INPUT .\waffer robot.png
+INPUT .\waffer robot.png
+INPUT .\default scara.png
+INPUT .\default scara.png
+INPUT .\default scara.png
+INPUT .\default scara.png
+INPUT .\default scara.png
+INPUT .\default scara.png
+INPUT .\default scara.png
+INPUT .\fancy scara.png
+INPUT .\fancy scara.png
+INPUT .\fancy scara.png
+INPUT .\fancy scara.png
+INPUT .\fancy scara.png
+INPUT .\fancy scara.png
+INPUT .\fancy scara.png
+INPUT .\sim window.png
+INPUT .\sim window.png
+INPUT .\sim window.png
+INPUT .\sim window.png
+INPUT .\sim window.png
+INPUT .\sim window.png
+INPUT .\sim window.png
+INPUT .\positions plot.png
+INPUT .\positions plot.png
+INPUT .\positions plot.png
+INPUT .\positions plot.png
+INPUT .\positions plot.png
+INPUT .\positions plot.png
+INPUT .\positions plot.png
 INPUT C:\Users\zasyp\AppData\Local\MiKTeX\fonts\map\pdftex\pdftex.map
 INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmr7t.vf
 INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
 INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\enc\dvips\base\8r.enc
+INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmr7t.vf
+INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
 INPUT formulas.aux
 INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmbx10.pfb
 INPUT C:\Users\zasyp\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmbx10.pfb
