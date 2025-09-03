@@ -123,6 +123,9 @@ q5 = q0
 # PRE-STEP USER FUNCTION FOR DYNAMIC CONTROL
 # ==========================================
 torque_values = []
+# log of [t, tau_ff...]
+tau_ff_log = []
+
 def PreStepUF(mbs, t):
     if useKT:
         # saturate time to the defined profile
@@ -140,6 +143,10 @@ def PreStepUF(mbs, t):
         M   = MassMatrix(robot, HT, J)
         tau_ff = (M @ qdd).tolist()
         mbs.SetObjectParameter(oKT, 'jointForceVector', tau_ff)
+        
+        # Store torque values for plotting
+        torque_values.append(tau_ff)
+        tau_ff_log.append([t] + tau_ff)
 
     return True
 
@@ -270,7 +277,7 @@ if 'renderState' in exu.sys:
     SC.SetRenderState(exu.sys['renderState'])
 
 # Wait for user input before starting simulation
-mbs.WaitForUserToContinue()
+SC.renderer.DoIdleTasks()
 
 # Run dynamic simulation
 mbs.SolveDynamic(
@@ -279,5 +286,17 @@ mbs.SolveDynamic(
 )
 
 # Cleanup
-exu.StopRenderer()
+SC.renderer.Stop()
+
+# Save tau_ff log
+try:
+    import numpy as _np
+    import os as _os
+    _out = _np.array(tau_ff_log, dtype=float)
+    if _out.size > 0:
+        _os.makedirs('sensor_outputs', exist_ok=True)
+        _np.savetxt(_os.path.join('sensor_outputs','tau_ff.txt'), _out, delimiter=',')
+except Exception as _e:
+    print('Warning: could not save tau_ff:', _e)
+
 mbs.SolutionViewer()
