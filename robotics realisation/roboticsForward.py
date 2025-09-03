@@ -243,7 +243,7 @@ simulationSettings = exu.SimulationSettings()
 
 # Time integration settings
 tEnd = 10  # Simulation time [s]
-h = 1e-2  # Step size [s]
+h = 1e-3  # Step size [s]
 
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
 simulationSettings.timeIntegration.endTime = tEnd
