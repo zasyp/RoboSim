@@ -97,6 +97,23 @@ HT_tool = np.array([
     [0, 0, 1, 0],
     [0, 0, 0, 1]
 ])
+
+q0 = np.array([0, 2*np.pi/3, -4*np.pi/3, 2*np.pi/3])
+
+def rotz(theta):
+    return np.array([
+        [np.cos(theta), -np.sin(theta), 0, 0],
+        [np.sin(theta),  np.cos(theta), 0, 0],
+        [0,              0,             1, 0],
+        [0,              0,             0, 1]
+    ])
+
+# Матрицы с учётом углов
+HT_Cyl = preHT_Cyl @ rotz(q0[0])
+HT_1   = preHT_1   @ rotz(q0[1])
+HT_2   = preHT_2   @ rotz(q0[2])
+HT_3   = preHT_3   @ rotz(q0[3])
+
 # Set PD control gains for joints that require control
 kp_trans = 1e10 # Prismatic joint proportional gain [N/m]
 kd_trans = 1e10  # Prismatic joint derivative gain [N·s/m]

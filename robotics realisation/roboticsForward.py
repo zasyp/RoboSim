@@ -7,6 +7,8 @@ from exudyn.robotics import *
 from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
 from exudyn.robotics.special import *
 from constants import *
+from src.trajectory_opt import theta_from_time, veloc_from_time, tt
+
 # ========================================
 # VISUALIZATION SETUP
 # ========================================
@@ -50,7 +52,7 @@ robot.AddLink(RobotLink(
     inertia=inertiaTensor1,
     jointType='Rz',  # Revolute joint around z-axis
     parent=0,  # Child of cylinder (link 0)
-    preHT=preHT_1,
+    preHT=HT_1,
     visualization=visualisationLink1,
     PDcontrol=(kp_rot, kd_rot)
 ))
@@ -61,7 +63,7 @@ robot.AddLink(RobotLink(
     inertia=inertiaTensor2,
     jointType='Rz',
     parent=1,  # Child of link 1
-    preHT=preHT_2,
+    preHT=HT_2,
     visualization=visualisationLink2,
     PDcontrol=(kp_rot2, kd_rot2)
 ))
@@ -72,7 +74,7 @@ robot.AddLink(RobotLink(
     inertia=inertiaTensor3,
     jointType='Rz',
     parent=2,  # Child of link 2
-    preHT=preHT_3,
+    preHT=HT_3,
     visualization=visualisationLink3,
     PDcontrol=(0, 0)  # No PD control for last link
 ))
@@ -112,11 +114,11 @@ q4 = [0.3, -0.3 * pi, -0.4 * pi, 0]
 q5 = q0
 
 # Add motion profiles with constant acceleration
-robotTrajectory.Add(ProfileConstantAcceleration(q1, 1))
-robotTrajectory.Add(ProfileConstantAcceleration(q2, 1))
-robotTrajectory.Add(ProfileConstantAcceleration(q3, 1))
-robotTrajectory.Add(ProfileConstantAcceleration(q4, 1))
-robotTrajectory.Add(ProfileConstantAcceleration(q5, 1))
+# robotTrajectory.Add(ProfileConstantAcceleration(q1, 1))
+# robotTrajectory.Add(ProfileConstantAcceleration(q2, 1))
+# robotTrajectory.Add(ProfileConstantAcceleration(q3, 1))
+# robotTrajectory.Add(ProfileConstantAcceleration(q4, 1))
+# robotTrajectory.Add(ProfileConstantAcceleration(q5, 1))
 # ==========================================
 # PRE-STEP USER FUNCTION FOR DYNAMIC CONTROL
 # ==========================================
@@ -124,17 +126,21 @@ torque_values = []
 def PreStepUF(mbs, t):
     if useKT:
         # Getting trajectory parameters
-        [u,v,a] = robotTrajectory.Evaluate(t)
+        # [u,v,a] = robotTrajectory.Evaluate(t)
+        u,v = theta_from_time, veloc_from_time
         # Calculating torques according to tau = M * ddq
         HT = robot.JointHT(u)
         jointJacs = JointJacobian(robot, HT, HT)
         MM = MassMatrix(robot, HT, jointJacs)
-        dynamical = MM.dot(a)
-        torque_values.append(dynamical)
+
+
+        # dynamical = MM.dot(a)
+        # torque_values.append(dynamical)
+        
         # Setting system parameters
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
-        mbs.SetObjectParameter(oKT, 'jointForceVector', dynamical)
+        # mbs.SetObjectParameter(oKT, 'jointForceVector', dynamical)
     return True
 
 mbs.SetPreStepUserFunction(PreStepUF)
@@ -399,13 +405,13 @@ def plot_all_results(times,
               ["Error"], "Epsilon2 Error", "Error (rad/s²)", "err_epsilon2.png")
 
     # Torques
-    save_plot(torque_times, [torques[:, 0]], ["Cylinder Force"],
-              "Cylinder Actuation Force (Pz joint)", "Force (N)",
-              "cylinder_force.png")
+    # save_plot(torque_times, [torques[:, 0]], ["Cylinder Force"],
+    #           "Cylinder Actuation Force (Pz joint)", "Force (N)",
+    #           "cylinder_force.png")
 
-    save_plot(torque_times, [torques[:, 1], torques[:, 2], torques[:, 3]],
-              ["Link 1 (Rz)", "Link 2 (Rz)", "Link 3 (Rz)"],
-              "Joint Actuation Torques", "Torque (N·m)", "all_torques.png")
+    # save_plot(torque_times, [torques[:, 1], torques[:, 2], torques[:, 3]],
+    #           ["Link 1 (Rz)", "Link 2 (Rz)", "Link 3 (Rz)"],
+    #           "Joint Actuation Torques", "Torque (N·m)", "all_torques.png")
 
 
 plot_all_results(
