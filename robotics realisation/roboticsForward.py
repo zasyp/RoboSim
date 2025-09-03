@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from exudyn.utilities import *
 from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
-from exudyn.robotics.motion import Trajectory, ProfileConstantAcceleration
 from exudyn.robotics.special import *
 from constants import *
 from src.trajectory_opt import theta_from_time, veloc_from_time, tt
+from tests import q_of_t, qd_of_t, qdd_of_t, t_max
 
 # ========================================
 # VISUALIZATION SETUP
@@ -104,7 +104,7 @@ mbs.AddObject(ObjectConnectorCoordinate(
 # ========================================
 # TRAJECTORY DEFINITION
 # ========================================
-robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=2)
+# robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=2)
 
 # Define waypoints for the trajectory
 q1 = [0.1, -0.5 * pi, 0.3 * pi, 0]
@@ -125,22 +125,22 @@ q5 = q0
 torque_values = []
 def PreStepUF(mbs, t):
     if useKT:
-        # Getting trajectory parameters
-        # [u,v,a] = robotTrajectory.Evaluate(t)
-        u,v = theta_from_time, veloc_from_time
-        # Calculating torques according to tau = M * ddq
-        HT = robot.JointHT(u)
-        jointJacs = JointJacobian(robot, HT, HT)
-        MM = MassMatrix(robot, HT, jointJacs)
+        # saturate time to the defined profile
+        t_clamped = t if t <= t_max else t_max
 
+        q  = q_of_t(t_clamped)
+        qd = qd_of_t(t_clamped)
+        qdd= qdd_of_t(t_clamped)
 
-        # dynamical = MM.dot(a)
-        # torque_values.append(dynamical)
+        mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector',  q.tolist())
+        mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector',  qd.tolist())
 
-        # Setting system parameters
-        mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector', u)
-        mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector', v)
-        # mbs.SetObjectParameter(oKT, 'jointForceVector', dynamical)
+        HT  = robot.JointHT(q)
+        J   = JointJacobian(robot, HT, HT)
+        M   = MassMatrix(robot, HT, J)
+        tau_ff = (M @ qdd).tolist()
+        mbs.SetObjectParameter(oKT, 'jointForceVector', tau_ff)
+
     return True
 
 mbs.SetPreStepUserFunction(PreStepUF)
