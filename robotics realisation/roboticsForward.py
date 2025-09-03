@@ -134,19 +134,15 @@ def PreStepUF(mbs, t):
         q  = q_of_t(t_clamped)
         qd = qd_of_t(t_clamped)
         qdd= qdd_of_t(t_clamped)
-
+        
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector',  q.tolist())
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector',  qd.tolist())
-
+        # Опционально: feed-forward момент
         HT  = robot.JointHT(q)
         J   = JointJacobian(robot, HT, HT)
         M   = MassMatrix(robot, HT, J)
         tau_ff = (M @ qdd).tolist()
         mbs.SetObjectParameter(oKT, 'jointForceVector', tau_ff)
-        
-        # Store torque values for plotting
-        torque_values.append(tau_ff)
-        tau_ff_log.append([t] + tau_ff)
 
     return True
 
