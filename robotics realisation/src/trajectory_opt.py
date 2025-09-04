@@ -121,6 +121,8 @@ jnt_traj_derivative = np.array([sc.interpolate.splev(theta, jnt1_spl, der=1), sc
 
 q1_lim_vel = 2000 / 60 * 2 * np.pi
 q2_lim_vel = 2000 / 60 * 2 * np.pi
+q1_lim_vel *= 0.01
+q2_lim_vel *= 0.01
 def d_th_dt_lim(th): 
     return np.array([
         q1_lim_vel / sc.interpolate.splev(th, jnt1_spl, der=1),
@@ -161,8 +163,8 @@ plt.plot(time, velocity_profile)
 tt = np.linspace(0, time[-1], 1000)
 theta_from_time = sc.interpolate.Akima1DInterpolator(time, theta, method="makima")(tt)
 veloc_from_time = sc.interpolate.Akima1DInterpolator(time, velocity_profile, method="makima")(tt)
-plt.plot(tt, jnt1_spl(theta_from_time))
-plt.plot(tt, jnt2_spl(theta_from_time))
+plt.plot(tt, sc.interpolate.splev(theta_from_time, jnt1_spl))
+plt.plot(tt, sc.interpolate.splev(theta_from_time, jnt2_spl))
 
 # plt.plot(tt, theta_from_time, 'r')
 # plt.plot(tt, veloc_from_time, 'b')

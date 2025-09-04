@@ -6,8 +6,7 @@ from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
 from exudyn.robotics.special import *
 from constants import *
-from src.trajectory_opt import theta_from_time, veloc_from_time, tt
-from tests import q_of_t, qd_of_t, qdd_of_t, t_max
+from tests import RobotTrajectoryObj, q_of_t, qd_of_t, qdd_of_t, t_min, t_max
 
 # ========================================
 # VISUALIZATION SETUP
@@ -104,21 +103,8 @@ mbs.AddObject(ObjectConnectorCoordinate(
 # ========================================
 # TRAJECTORY DEFINITION
 # ========================================
-# robotTrajectory = Trajectory(initialCoordinates=q0, initialTime=2)
+trajectory_obj = RobotTrajectoryObj()
 
-# Define waypoints for the trajectory
-q1 = [0.1, -0.5 * pi, 0.3 * pi, 0]
-q2 = [0.2, 0.5 * pi, -0.3 * pi, 0]
-q3 = [0.1, -0.5 * pi, -0.1 * pi, 0]
-q4 = [0.3, -0.3 * pi, -0.4 * pi, 0]
-q5 = q0
-
-# Add motion profiles with constant acceleration
-# robotTrajectory.Add(ProfileConstantAcceleration(q1, 1))
-# robotTrajectory.Add(ProfileConstantAcceleration(q2, 1))
-# robotTrajectory.Add(ProfileConstantAcceleration(q3, 1))
-# robotTrajectory.Add(ProfileConstantAcceleration(q4, 1))
-# robotTrajectory.Add(ProfileConstantAcceleration(q5, 1))
 # ==========================================
 # PRE-STEP USER FUNCTION FOR DYNAMIC CONTROL
 # ==========================================
@@ -137,7 +123,7 @@ def PreStepUF(mbs, t):
         
         mbs.SetObjectParameter(oKT, 'jointPositionOffsetVector',  q.tolist())
         mbs.SetObjectParameter(oKT, 'jointVelocityOffsetVector',  qd.tolist())
-        # Опционально: feed-forward момент
+
         HT  = robot.JointHT(q)
         J   = JointJacobian(robot, HT, HT)
         M   = MassMatrix(robot, HT, J)
@@ -245,8 +231,8 @@ mbs.Assemble()
 simulationSettings = exu.SimulationSettings()
 
 # Time integration settings
-tEnd = 10  # Simulation time [s]
-h = 1e-3  # Step size [s]
+tEnd = 0.5  # Simulation time [s]
+h = 1e-4  # Step size [s]
 
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
 simulationSettings.timeIntegration.endTime = tEnd
