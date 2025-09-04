@@ -231,7 +231,7 @@ mbs.Assemble()
 simulationSettings = exu.SimulationSettings()
 
 # Time integration settings
-tEnd = 0.5  # Simulation time [s]
+tEnd = 4  # Simulation time [s]
 h = 1e-4  # Step size [s]
 
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
