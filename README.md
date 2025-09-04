@@ -8,7 +8,7 @@ This project is a robotics simulation using Exudyn for multibody dynamics. It in
 - `plot_sensors.py` – Plotting from files in `sensor_outputs/` (no simulation run)
 - `run_simulation.py` – One-click runner: simulation + plots
 - `constants.py` – Robot parameters and visualization assets
-- `tests.py` – Helpers for q(t), q̇(t), q̈(t) and ideal trajectory wrapper
+- `tests.py` – Helpers for q(t), q̇(t), q̈(t)
 - `sensor_outputs/` – Simulation outputs (CSV-like text files)
 - `plots/` – Generated figures
 ### **Installation**
@@ -34,19 +34,18 @@ python plot_sensors.py
 ```
 ## What gets plotted
 `plot_sensors.py` generates the following figures in `plots/`:
-- `vertical_velocity.png` – Vertical velocity vs ideal
-- `omega1.png`, `omega2.png`, `omega3.png` – Joint angular velocities vs ideal
-- `vertical_acceleration.png` – Vertical acceleration vs ideal
-- `epsilon1.png`, `epsilon2.png`, `epsilon3.png` – Joint angular accelerations vs ideal
-- `err_*.png` – Error plots for the above signals
-- `all_torques.png` – Joint torques over time (see below)
+- `vertical_velocity.png` – Vertical velocity
+- `omega1.png`, `omega2.png`, `omega3.png` – Joint angular velocities
+- `vertical_acceleration.png` – Vertical acceleration
+- `epsilon1.png`, `epsilon2.png`, `epsilon3.png` – Joint angular accelerations
+- `tau_ff.png` – Feed-forward torques over time (see below)
 ## Joint torques
 - Torques are computed in `roboticsForward.py` in `PreStepUF` (feed-forward term) and written by Exudyn into `sensor_outputs/Torques.txt` (or compatible file names).
 - `plot_sensors.py` contains a robust parser for torque files. It:
   - accepts comma-, space-, or bracketed formats
   - extracts all numbers via regex per line
   - assumes the first column is time, the remaining columns are torques for the joints
-- The plot is saved as `plots/all_torques.png`. If no valid torque file is found or parsing fails, the script will skip the torque plot with a warning.
+- The plot is saved as `plots/tau_ff.png`. If no valid torque file is found or parsing fails, the script will skip the torque plot with a warning.
 ## Notes
 - The simulation window is handled programmatically; deprecated Exudyn calls were replaced with the recommended API.
 - If plots look empty, ensure that `sensor_outputs/` contains fresh data by re-running `roboticsForward.py` first.

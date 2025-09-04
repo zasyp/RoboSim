@@ -28,6 +28,7 @@ def get_sensor_data_exudyn():
             "omega1":       mbs.GetSensorStoredData(rf.omega1Sensor),
             "omega2":       mbs.GetSensorStoredData(rf.omega2Sensor),
             "omega3":       mbs.GetSensorStoredData(rf.omega3Sensor),
+            "torques":      np.array([]),  # Initialize empty, will be filled from files if needed
         }
         # Basic validation: ensure arrays are non-empty
         if any(isinstance(v, np.ndarray) and v.size > 0 for v in data.values()):
@@ -116,31 +117,30 @@ def get_sensor_data_from_files():
         print("Warning: Could not read omega3_deg.txt")
         data["omega3"] = np.array([])
 
-    # Read torques (robust regex-based parser)
-    torque_path_candidates = [
-        os.path.join(output_dir, "Torques.txt"),
-        os.path.join(output_dir, "torque_data.txt"),
-        os.path.join(output_dir, "torques.txt"),
-    ]
-    torques = []
-    for path in torque_path_candidates:
-        if os.path.exists(path):
-            try:
-                with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-                    for line in f:
-                        if line.lstrip().startswith('#') or not line.strip():
-                            continue
-                        # extract all floats in the line
-                        nums = re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", line)
-                        if nums:
-                            torques.append([float(x) for x in nums])
-                if len(torques) > 0:
-                    break
-            except Exception as e:
-                print(f"Warning: Could not parse torques from {path}: {e}")
-    data["torques"] = np.array(torques, dtype=float) if len(torques) > 0 else np.array([])
+    # Read torques
+    data["torques"] = load_torques_from_files()
     
     return data
+
+def load_torques_from_files():
+    """Load torque data from files"""
+    output_dir = SENSOR_DIR
+    
+    # Read torques - try multiple common file names
+    torque_files = ["tau_ff.txt", "Torques.txt", "torques.txt", "torque_data.txt"]
+    torques = None
+    for filename in torque_files:
+        try:
+            filepath = os.path.join(output_dir, filename)
+            if os.path.exists(filepath):
+                torques = np.loadtxt(filepath, delimiter=',', comments='#')
+                print(f"Successfully loaded torques from {filename}")
+                break
+        except Exception as e:
+            print(f"Warning: Could not read {filename}: {e}")
+            continue
+    
+    return torques if torques is not None else np.array([])
 
 def save_plot(x, y_list, labels, title, ylabel, filename, linestyles=None, outdir=PLOTS_DIR):
     os.makedirs(outdir, exist_ok=True)
@@ -176,12 +176,43 @@ def save_xy_plot(xy_series, labels, title, filename, outdir=PLOTS_DIR):
     plt.savefig(os.path.join(outdir, filename), dpi=300)
     plt.close()
 
+def plot_torques(torques, times=None, outdir=PLOTS_DIR):
+    """Easy torque plotting function"""
+    if not isinstance(torques, np.ndarray) or torques.size == 0:
+        print("Warning: No torque data available")
+        return
+    
+    # Handle different data formats
+    if torques.ndim == 1:
+        torques = torques.reshape(1, -1)
+    
+    # Determine time and torque data
+    if torques.shape[1] > 1:
+        t_tau = torques[:, 0]
+        torque_data = [torques[:, i] for i in range(1, torques.shape[1])]
+    else:
+        if times is None:
+            print("Warning: No time data available for torques")
+            return
+        t_tau = times
+        torque_data = [torques.flatten()]
+    
+    # Create labels
+    labels = [f"τ{i}" for i in range(len(torque_data))]
+    
+    # Save plot
+    save_plot(t_tau, torque_data, labels, "Joint Torques", "Torque (N·m)", "tau_ff.png", outdir=outdir)
+    print(f"Torque plot saved with {len(torque_data)} joint(s)")
+
 
 def main():
     # Prefer Exudyn in-memory data; fallback to files
     data = get_sensor_data_exudyn()
     if data is None:
         data = get_sensor_data_from_files()
+    else:
+        # If we got data from Exudyn memory, still try to load torques from files
+        data["torques"] = load_torques_from_files()
     
     # Check if we have any data
     if not any(isinstance(v, np.ndarray) and v.size > 0 for v in data.values()):
@@ -228,25 +259,7 @@ def main():
     epsilon2 = np.gradient(omega2, times) if len(omega2) > 0 else np.array([])
     epsilon3 = np.gradient(omega3, times) if len(omega3) > 0 else np.array([])
     
-    # Generate ideal trajectories (kept for error plots only)
-    n = len(times)
-    ideal_positions = np.zeros((n, 4))
-    ideal_velocities = np.zeros((n, 4))
-    ideal_accelerations = np.zeros((n, 4))
-    
-    for i, t in enumerate(times):
-        try:
-            pos, vel, acc = robotTrajectory.Evaluate(t)
-            ideal_positions[i] = pos
-            ideal_velocities[i] = vel
-            ideal_accelerations[i] = acc
-        except:
-            ideal_positions[i] = np.zeros(4)
-            ideal_velocities[i] = np.zeros(4)
-            ideal_accelerations[i] = np.zeros(4)
-    
-    z0 = verticalDisp_abs[0] if len(verticalDisp_abs) > 0 else 0
-    ideal_vertical_position = z0 + ideal_positions[:, 0]
+
     
     # Create plots
     print("Creating plots...")
@@ -268,19 +281,19 @@ def main():
     
     # Velocity plots
     if len(verticalVel_abs) > 0:
-        save_plot(times, [verticalVel_abs, ideal_velocities[:, 0]],
-                  ["Simulated", "Ideal"], "Vertical Velocity", "Velocity (m/s)", 
-                  "vertical_velocity.png", ["-", "--"])
+        save_plot(times, [verticalVel_abs],
+                  ["Simulated"], "Vertical Velocity", "Velocity (m/s)", 
+                  "vertical_velocity.png")
     
     if len(omega1) > 0:
-        save_plot(times, [omega1, ideal_velocities[:, 1]],
-                  ["Simulated", "Ideal"], "Omega1", "Angular Velocity (rad/s)", 
-                  "omega1.png", ["-", "--"])
+        save_plot(times, [omega1],
+                  ["Simulated"], "Omega1", "Angular Velocity (rad/s)", 
+                  "omega1.png")
     
     if len(omega2) > 0:
-        save_plot(times, [omega2, ideal_velocities[:, 2]],
-                  ["Simulated", "Ideal"], "Omega2", "Angular Velocity (rad/s)", 
-                  "omega2.png", ["-", "--"])
+        save_plot(times, [omega2],
+                  ["Simulated"], "Omega2", "Angular Velocity (rad/s)", 
+                  "omega2.png")
     
     if len(omega3) > 0:
         save_plot(times, [omega3], ["Simulated"], "Omega3", 
@@ -288,64 +301,26 @@ def main():
     
     # Acceleration plots
     if len(verticalAcc) > 0:
-        save_plot(times, [verticalAcc, ideal_accelerations[:, 0]],
-                  ["Simulated", "Ideal"], "Vertical Acceleration", "Acceleration (m/s²)", 
-                  "vertical_acceleration.png", ["-", "--"])
+        save_plot(times, [verticalAcc],
+                  ["Simulated"], "Vertical Acceleration", "Acceleration (m/s²)", 
+                  "vertical_acceleration.png")
     
     if len(epsilon1) > 0:
-        save_plot(times, [epsilon1, ideal_accelerations[:, 1]],
-                  ["Simulated", "Ideal"], "Epsilon1", "Angular Acceleration (rad/s²)", 
-                  "epsilon1.png", ["-", "--"])
+        save_plot(times, [epsilon1],
+                  ["Simulated"], "Epsilon1", "Angular Acceleration (rad/s²)", 
+                  "epsilon1.png", ["-"])
     
     if len(epsilon2) > 0:
-        save_plot(times, [epsilon2, ideal_accelerations[:, 2]],
-                  ["Simulated", "Ideal"], "Epsilon2", "Angular Acceleration (rad/s²)", 
-                  "epsilon2.png", ["-", "--"])
+        save_plot(times, [epsilon2],
+                  ["Simulated"], "Epsilon2", "Angular Acceleration (rad/s²)", 
+                  "epsilon2.png", ["-"])
     
     if len(epsilon3) > 0:
         save_plot(times, [epsilon3], ["Simulated"], "Epsilon3", 
                   "Angular Acceleration (rad/s²)", "epsilon3.png")
     
-    # Error plots
-    if len(verticalVel_abs) > 0:
-        save_plot(times, [ideal_velocities[:, 0] - verticalVel_abs], ["Error"],
-                  "Vertical Velocity Error", "Error (m/s)", "err_vertical_velocity.png")
-    
-    if len(verticalAcc) > 0:
-        save_plot(times, [ideal_accelerations[:, 0] - verticalAcc], ["Error"],
-                  "Vertical Acceleration Error", "Error (m/s²)", "err_vertical_acceleration.png")
-    
-    if len(omega1) > 0:
-        save_plot(times, [ideal_velocities[:, 1] - omega1], ["Error"],
-                  "Omega1 Error", "Error (rad/s)", "err_omega1.png")
-    
-    if len(epsilon1) > 0:
-        save_plot(times, [ideal_accelerations[:, 1] - epsilon1], ["Error"],
-                  "Epsilon1 Error", "Error (rad/s²)", "err_epsilon1.png")
-    
-    if len(omega2) > 0:
-        save_plot(times, [ideal_velocities[:, 2] - omega2], ["Error"],
-                  "Omega2 Error", "Error (rad/s)", "err_omega2.png")
-    
-    if len(epsilon2) > 0:
-        save_plot(times, [ideal_accelerations[:, 2] - epsilon2], ["Error"],
-                  "Epsilon2 Error", "Error (rad/s²)", "err_epsilon2.png")
-
-    # tau_ff plots from dedicated file
-    tau_path = os.path.join(SENSOR_DIR, 'tau_ff.txt')
-    if os.path.exists(tau_path):
-        try:
-            arr = np.loadtxt(tau_path, delimiter=',')
-            if arr.ndim == 1:
-                arr = arr.reshape(1, -1)
-            t_tau = arr[:, 0]
-            Y = [arr[:, i] for i in range(1, arr.shape[1])]
-            labels = [f"tau_ff[{i-1}]" for i in range(1, arr.shape[1])]
-            save_plot(t_tau, Y, labels, "Feed-forward torques tau_ff", "Torque (N·m)", "tau_ff.png")
-        except Exception as e:
-            print(f"Warning: could not read tau_ff.txt: {e}")
-    else:
-        print("Warning: tau_ff.txt not found; skipping tau_ff plot")
+    # Torque plots
+    plot_torques(data.get("Torques", np.array([])), times)
     
     print("Plots created successfully!")
 
