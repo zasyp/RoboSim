@@ -6,7 +6,7 @@ from exudyn.rigidBodyUtilities import *
 from exudyn.robotics import *
 from exudyn.robotics.special import *
 from constants import *
-from tests import RobotTrajectoryObj, q_of_t, qd_of_t, qdd_of_t, t_min, t_max
+from src.trajectory_opt import *
 
 # ========================================
 # VISUALIZATION SETUP

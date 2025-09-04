@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from tests import *
+from src.trajectory_opt import *
 import re
 from src.trajectory_opt import forward_kin, Params
 from constants import l1, l2, l3
