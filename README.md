@@ -12,7 +12,7 @@ Robot defined by robotics.Robot class. Base tool and four links with masses, ine
 1. Install Python 3.9+ (recommended).
 2. Install required packages:
    ```bash
-   pip install exudyn numpy matplotlib
+   pip install requirements
    ```
 3. Clone or download this repository.
 ---
