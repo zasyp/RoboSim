@@ -2,10 +2,10 @@ import autograd.numpy as np  # Thinly-wrapped numpy
 import matplotlib.pyplot as plt
 import scipy as sc
 from scipy.linalg import solve
-import sympy as sp
-from sympy import Derivative, Function, symbols, Subs
+# import sympy as sp
+# from sympy import Derivative, Function, symbols, Subs
 from scipy.interpolate import CubicSpline
-from sympy.abc import x, y
+# from sympy.abc import x, y
 from scipy.differentiate import jacobian as sc_jac
 # l1, l2 = symbols('l1 l2')
 # Derivative(l1*sp.cos(x) + l1*sp.cos(x +y) + l2*sp.cos(x + 0.5*y),x, evaluate=True)
@@ -121,10 +121,6 @@ jnt_traj_derivative = np.array([sc.interpolate.splev(theta, jnt1_spl, der=1), sc
 
 q1_lim_vel = 2000 / 60 * 2 * np.pi
 q2_lim_vel = 2000 / 60 * 2 * np.pi
-
-q1_lim_vel *= 0.005
-q2_lim_vel *= 0.005
-
 def d_th_dt_lim(th): 
     return np.array([
         q1_lim_vel / sc.interpolate.splev(th, jnt1_spl, der=1),
@@ -148,7 +144,7 @@ velocity_profile_knots[-1] = 0
 plt.plot(theta[indices], velocity_profile_knots, '.')
 plt.plot(theta, lims)
 velocity_profile = sc.interpolate.Akima1DInterpolator(theta[indices], velocity_profile_knots, method="makima")(theta)
-for i in np.linspace(0.6, 0.8, 4):
+for i in np.linspace(0.6, 0.95, 4):
     plt.plot(theta, velocity_profile*i)
 plt.show()
 
@@ -165,8 +161,8 @@ plt.plot(time, velocity_profile)
 tt = np.linspace(0, time[-1], 1000)
 theta_from_time = sc.interpolate.Akima1DInterpolator(time, theta, method="makima")(tt)
 veloc_from_time = sc.interpolate.Akima1DInterpolator(time, velocity_profile, method="makima")(tt)
-# plt.plot(tt, jnt1_spl(theta_from_time))
-# plt.plot(tt, jnt2_spl(theta_from_time))
+plt.plot(tt, jnt1_spl(theta_from_time))
+plt.plot(tt, jnt2_spl(theta_from_time))
 
 # plt.plot(tt, theta_from_time, 'r')
 # plt.plot(tt, veloc_from_time, 'b')
