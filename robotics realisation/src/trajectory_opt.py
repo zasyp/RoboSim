@@ -13,7 +13,6 @@ from scipy.differentiate import jacobian as sc_jac
 # Derivative(l1*sp.cos(x) + l1*sp.cos(x +y) + l2*sp.cos(x + 0.5*y),y, evaluate=True)
 # Derivative(l1*sp.sin(x) + l1*sp.sin(x +y) + l2*sp.sin(x + 0.5*y),y, evaluate=True)
 import nurbspy as nrb
-from src.trajectory_opt import *
 from scipy.interpolate import Akima1DInterpolator
 import autograd.numpy as np
 
@@ -109,7 +108,7 @@ for i in range(0,N):
     axs_traj_test[i,:] = fk(jnt_traj[i,:])
 plt.plot(theta, jnt_traj[:,0], '-')
 plt.plot(theta, jnt_traj[:,1], '-')
-plt.show()
+# plt.show()
 # Compute derivative of joint trajectory using 4th order schemes with vectorized operations
 # Calculate step size based on theta spacing
 h = theta[1]-theta[0]  # theta goes from 0 to 1 with N points
@@ -137,13 +136,13 @@ plt.plot(theta, limits[0,:], '-')
 plt.plot(theta, -limits[0,:], '-')
 plt.plot(theta, limits[1,:], '-')
 plt.plot(theta, -limits[1,:], '-')
-plt.show()
+# plt.show()
 
 lims = np.min(np.abs(limits.T), axis=1)
 indices = np.r_[0:len(theta):50, len(theta)-1]
 plt.plot(theta[indices], lims[indices], '.')
 plt.plot(theta[indices], -lims[indices],'.')
-plt.show()
+# plt.show()
 velocity_profile_knots = lims[indices]
 velocity_profile_knots[0] = 0
 velocity_profile_knots[-1] = 0
@@ -152,7 +151,7 @@ plt.plot(theta, lims)
 velocity_profile = sc.interpolate.Akima1DInterpolator(theta[indices], velocity_profile_knots, method="makima")(theta)
 for i in np.linspace(0.6, 0.95, 4):
     plt.plot(theta, velocity_profile*i)
-plt.show()
+# plt.show()
 
 
 
@@ -172,7 +171,7 @@ plt.plot(tt, sc.interpolate.splev(theta_from_time, jnt2_spl))
 
 # plt.plot(tt, theta_from_time, 'r')
 # plt.plot(tt, veloc_from_time, 'b')
-plt.show()
+# plt.show()
 
 jnt1_spl = sc.interpolate.splrep(theta, jnt_traj[:, 0])
 jnt2_spl = sc.interpolate.splrep(theta, jnt_traj[:, 1])

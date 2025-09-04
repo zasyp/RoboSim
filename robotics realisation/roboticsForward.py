@@ -109,8 +109,6 @@ trajectory_obj = RobotTrajectoryObj()
 # PRE-STEP USER FUNCTION FOR DYNAMIC CONTROL
 # ==========================================
 torque_values = []
-# log of [t, tau_ff...]
-tau_ff_log = []
 
 def PreStepUF(mbs, t):
     if useKT:
@@ -128,6 +126,7 @@ def PreStepUF(mbs, t):
         J   = JointJacobian(robot, HT, HT)
         M   = MassMatrix(robot, HT, J)
         tau_ff = (M @ qdd).tolist()
+        torque_values.append(tau_ff)
         mbs.SetObjectParameter(oKT, 'jointForceVector', tau_ff)
 
     return True
@@ -224,6 +223,8 @@ omega3Sensor = mbs.AddSensor(SensorKinematicTree(
     name="omega3_deg"
 ))
 
+
+
 # ========================================
 # SIMULATION SETUP
 # ========================================
@@ -269,16 +270,10 @@ mbs.SolveDynamic(
 
 # Cleanup
 SC.renderer.Stop()
-
-# Save tau_ff log
-try:
-    import numpy as _np
-    import os as _os
-    _out = _np.array(tau_ff_log, dtype=float)
-    if _out.size > 0:
-        _os.makedirs('sensor_outputs', exist_ok=True)
-        _np.savetxt(_os.path.join('sensor_outputs','tau_ff.txt'), _out, delimiter=',')
-except Exception as _e:
-    print('Warning: could not save tau_ff:', _e)
-
 mbs.SolutionViewer()
+
+np.savetxt(
+    os.path.join('sensor_outputs', 'tau_ff.txt'),
+    np.array(torque_values),
+    delimiter=','
+)
