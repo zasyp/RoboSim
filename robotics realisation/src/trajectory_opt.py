@@ -124,8 +124,6 @@ jnt_traj_derivative = np.array([sc.interpolate.splev(theta, jnt1_spl, der=1), sc
 
 q1_lim_vel = 2000 / 60 * 2 * np.pi
 q2_lim_vel = 2000 / 60 * 2 * np.pi
-q1_lim_vel *= 0.01
-q2_lim_vel *= 0.01
 def d_th_dt_lim(th): 
     return np.array([
         q1_lim_vel / sc.interpolate.splev(th, jnt1_spl, der=1),
