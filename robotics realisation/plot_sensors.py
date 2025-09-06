@@ -38,6 +38,20 @@ def save_xy_plot(xy_series, labels, title, filename, outdir=PLOTS_DIR):
     plt.savefig(os.path.join(outdir, filename), dpi=300)
     plt.close()
 
+def save_y_of_x(X, Y, title, filename, outdir=PLOTS_DIR):
+    os.makedirs(outdir, exist_ok=True)
+    plt.figure(figsize=(7, 7))
+    plt.plot(X, Y, label="End-effector path")
+    plt.xlabel("X (m)")
+    plt.ylabel("Y (m)")
+    plt.title(title)
+    plt.axis('equal')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(outdir, filename), dpi=300)
+    plt.close()
+
 def main():
     print("Loading sensor data...")
     
@@ -99,6 +113,7 @@ def main():
     X = l1*np.cos(theta1_rad) + l2*np.cos(theta2_rad) + l3*np.cos(theta1_rad + 0.5*theta2_rad)
     Y = l1*np.sin(theta1_rad) + l2*np.sin(theta2_rad) + l3*np.sin(theta1_rad + 0.5*theta2_rad)
     
+    save_y_of_x(X, Y, "End-effector trajectory y(x)", "trajectory_y_of_x.png")
     save_plot(times, [X], ["X(t)"], "X coordinate", "X (m)", "x_of_t.png")
     save_plot(times, [Y], ["Y(t)"], "Y coordinate", "Y (m)", "y_of_t.png")
     save_xy_plot([(X, Y)], ["End-effector"], "End-effector trajectory (XY)", "trajectory_xy.png")
@@ -131,6 +146,8 @@ def main():
         save_plot(t_tau, torque_data, labels, "Joint Torques", "Torque (N·m)", "tau_ff.png")
     
     print("Plots created successfully!")
+
+
 
 if __name__ == "__main__":
     main() 

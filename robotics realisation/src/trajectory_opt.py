@@ -154,7 +154,6 @@ for i in np.linspace(0.6, 0.95, 4):
 # plt.show()
 
 
-
 time = np.zeros(theta.shape)
 time[1:-1] = np.cumsum(1/velocity_profile[1:-1])*h
 coefficients = np.polyfit(theta[-4:-1], time[-4:-1], 2)
